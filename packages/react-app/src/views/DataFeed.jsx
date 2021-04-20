@@ -13,7 +13,7 @@ import fetch from 'isomorphic-fetch';
 
 export default function DataFeed(props) {
   // NOTE: This will depend on where you deploy.
-  const [subgraph, setSubgraph] = useState("http://localhost:8000/subgraphs/name/dkirsche/asset-price-history");
+  const [subgraph, setSubgraph] = useState("https://api.thegraph.com/subgraphs/name/dkirsche/asset-price-history");
 
   function graphQLFetcher(graphQLParams) {
     return fetch(subgraph, {
@@ -25,11 +25,11 @@ export default function DataFeed(props) {
 
   const EXAMPLE_GRAPHQL = `
   {
-    assets(first: 25) {
+    assets(first: 10) {
       id
       name
       totalSupply
-      priceHistoryDaily {
+      priceHistoryDaily(first: 10) {
         id
         pricePerShare
         timestamp
@@ -47,7 +47,13 @@ export default function DataFeed(props) {
         </div>
 
         <p>
-          You have selected {subgraph}
+          You can use this to directly query PriceFeed subgraphs. Simply enter the subgraph URL below and it'll update
+          on change. Right now, you're querying: {subgraph}
+        </p>
+
+        <p>
+          If you have your own subgraph setup, you can use http://localhost:8000/subgraphs/name/dkirsche/asset-price-history
+          If you need help setting up a Subgraph, read the instructions here: https://github.com/dkirsche/token-history-subgraph/blob/main/README.md
         </p>
 
         <div style={{margin:32, height:400, border:"1px solid #888888", textAlign:'left'}}>
