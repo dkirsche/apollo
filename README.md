@@ -1,3 +1,11 @@
+# Hackathon Dream Team Quickstart
+1. Run `yarn install`
+2. Run `yarn start`
+3. Navivate to `http://localhost:3000/datafeed`. This page automatically queries the
+production data from https://api.thegraph.com/subgraphs/name/dkirsche/asset-price-history. You
+can easily replace this with your local subgraph if you have it.
+
+
 # 🏗 scaffold-eth
 
 > is everything you need to get started building decentralized applications powered by Ethereum
@@ -601,6 +609,16 @@ Poll your holders! Build an example emoji voting system with 🏗 <b>scaffold-et
 ](https://youtu.be/T5ylzOTkn-Q)
 
 [ 🎥 here is another Graph speed run tutorial video ](https://youtu.be/T5ylzOTkn-Q)
+
+### Instructions
+Instead, you can use The Graph with 🏗 scaffold-eth (learn more):
+🚮Clean up previous data: rm -rf docker/graph-node/data/
+📡Spin up a local graph node by running yarn graph-run-node (requires Docker)
+📝Create your local subgraph by running yarn graph-create-local(only required once!)
+🚢Deploy your local subgraph by running yarn graph-ship-local
+🖍️Edit your local subgraph inpackages/subgraph/src(learn more about subgraph definition here)
+🤩Deploy your contracts and your subgraph in one go by runningyarn deploy-and-graph
+
 
 
 ---
