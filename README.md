@@ -1,3 +1,11 @@
+# Hackathon Dream Team Quickstart
+1. Run `yarn install`
+2. Run `yarn start`
+3. Navivate to `http://localhost:3000/datafeed`. This page automatically queries the
+production data from https://api.thegraph.com/subgraphs/name/dkirsche/asset-price-history. You
+can easily replace this with your local subgraph if you have it.
+
+
 # 🏗 scaffold-eth
 
 > is everything you need to get started building decentralized applications powered by Ethereum
