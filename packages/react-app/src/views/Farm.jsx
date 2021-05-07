@@ -9,14 +9,13 @@ import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
-import { convertToPrice, chartOptions } from '../helpers';
+import { calculateAPR, convertToPrice, chartOptions } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
 export default function Farm({ subgraph }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
-
 
   const GET_PRICE_HISTORIES = gql`
   query Recent
@@ -28,43 +27,71 @@ export default function Farm({ subgraph }) {
     }
   }`;
 
-  const { loading, error, data } = useQuery(GET_PRICE_HISTORIES);
+  const GET_REWARD_HISTORIES = gql`
+  query Recent
+  {
+    rewardHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
+      asset {
+        id
+      }
+      gaugeId
+      rewardPerShareBoosted
+      rewardPerShareNotBoosted
+      workingSupply
+      reward
+      rewardToken
+      rewardTokenID
+      timestamp
+    }
+  }`;
+
+  const { data: priceData,  error: errorPrice,  loading: loadingPrice }  = useQuery(GET_PRICE_HISTORIES);
+  const { data: rewardData, error: errorReward, loading: loadingReward } = useQuery(GET_REWARD_HISTORIES);
 
   useEffect(()=>{
-    if (data && data.priceHistoryDailies) {
-      const history = data.priceHistoryDailies;
-      const labels  = history.map( (h) => {
+    console.log("RESULT = ", {priceData, rewardData})
+
+    if (priceData && rewardData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies) {
+      const priceHistory  = priceData.priceHistoryDailies;
+      const rewardHistory = rewardData.rewardHistoryDailies;
+
+      console.log("priceHistory = ", priceHistory)
+
+      const labels  = rewardHistory.map( (h) => {
         return parseInt(h.timestamp);
-        // const d = new Date();
-        // return d.setUTCSeconds(h.timestamp);
       });
 
-      const prices = history.map( (h) => {
-        return convertToPrice(h.pricePerShare);
+      const aprs = rewardHistory.map( reward => {
+        // Iterate over price history finding the corresponding timestamp.
+        const correspondingPrice = priceHistory.find(price => {
+          return reward.timestamp === price.timestamp
+        })
+
+        return calculateAPR({
+          reward: reward.rewardPerShareNotBoosted,
+          pricePerShare: correspondingPrice.pricePerShare,
+        })
       });
 
-      // console.log("labels = ", labels);
-      // console.log("prices = ", prices);
-      // setTimeseries(labels);
+      console.log({labels, aprs});
 
       setChartData({
         labels: labels,
         datasets: [{
-          label: 'Price History',
+          label: 'Historical APR',
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgb(255, 99, 132)',
-          data: prices,
+          data: aprs,
         }]
       });
 
     }
 
-  }, [loading, error, data])
+  }, [priceData, rewardData])
 
 
   function image() {
     const vaultName = subgraph.name.toLowerCase().split("_")[1];
-    console.log("vaultName = ", {name: subgraph.name, vaultName});
     if (vaultName === 'yswap')
       return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#yfi`
     else
