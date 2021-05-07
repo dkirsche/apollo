@@ -16,7 +16,8 @@ const prevTheme = window.localStorage.getItem("theme");
 let subgraphUri = "http://localhost:8000/subgraphs/name/scaffold-eth/your-contract"
 
 const client = new ApolloClient({
-  uri: subgraphUri,
+  // uri: subgraphUri,
+  uri: "https://api.thegraph.com/subgraphs/name/dkirsche/asset-price-history",
   cache: new InMemoryCache()
 });
 
