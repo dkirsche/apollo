@@ -10,8 +10,8 @@ import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
 import { convertToPrice, chartOptions } from '../helpers';
-
 import { defaults, Line } from 'react-chartjs-2';
+import CurveImg from '../assets/curve.png';
 
 export default function Farm({ subgraph }) {
   const [timeseries, setTimeseries] = useState([]);
@@ -31,10 +31,6 @@ export default function Farm({ subgraph }) {
   const { loading, error, data } = useQuery(GET_PRICE_HISTORIES);
 
   useEffect(()=>{
-    console.log("loading = ", loading);
-    console.log("error = ", error);
-    console.log("data = ", data);
-
     if (data && data.priceHistoryDailies) {
       const history = data.priceHistoryDailies;
       const labels  = history.map( (h) => {
@@ -66,32 +62,55 @@ export default function Farm({ subgraph }) {
   }, [loading, error, data])
 
 
-  function imageFor(vault) {
-    const asset = `assets/${vault}.svg`;
-    console.log("asset = ", asset);
-    return asset;
+  function image() {
+    const vaultName = subgraph.name.toLowerCase().split("_")[1];
+    console.log("vaultName = ", {name: subgraph.name, vaultName});
+    if (vaultName === 'yswap')
+      return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#yfi`
+    else
+      return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#${vaultName}`
+  }
+
+  function prettyName() {
+    const vaultName = subgraph.name.toLowerCase().split("_")[1];
+    if (vaultName === 'compound')
+      return 'Compound Pool'
+    else if (vaultName === 'usdp')
+      return 'USDP Pool'
+    else if(vaultName === 'yswap')
+      return 'Y Pool'
+    else if(vaultName === 'ren')
+      return 'BTC-REN Pool'
+    else if(vaultName === 'susd')
+      return 'sUSD Pool'
+    else if(vaultName === 'aave')
+      return 'AAVE Pool'
+    else if(vaultName === '3pool')
+      return '3Pool Pool'
+    else
+      return subgraph.name
   }
 
   return (
     <li className="list-group-item">
       <div className="row">
-        <div className="col-2">
+        <div className="col-3 align-items-center d-flex flex-column align-self-center">
+          <div className="d-flex mb-2 justify-content-center">
+            <div className="d-flex" style={{width: "100px"}}>
+              <div className="farm-pair" style={{zIndex: 1}}>
+                <img src={ CurveImg } />
+              </div>
 
-          <div className="ohm-pairs d-flex mr-4 justify-content-center" style={{width: "64px"}}>
-            <div className="ohm-pair" style={{zIndex: 2}}>
-              <img src={ imageFor('compound') } />
-            </div>
-
-            <div className="ohm-pair" style={{zIndex: 1}}>
-              <img src={ imageFor('usdp') } />
+              <div className="farm-pair" style={{zIndex: 2}}>
+                <img src={ image() } />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="col-1">
 
+          <h4 className="text-center">{ prettyName() }</h4>
 
-          {subgraph.name}
         </div>
+
         <div className="col-9">
           <Line data={chartData} options={chartOptions()} />
         </div>

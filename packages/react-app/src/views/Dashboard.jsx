@@ -30,7 +30,6 @@ export default function Dashboard(props) {
     if (data && data.assets) {
       setSubgraphs(data.assets)
     }
-
   }, [loading, error, data])
 
 

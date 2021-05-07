@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
-
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import "./App.css";
 
 import { DataFeed, Dashboard } from "./views"
 
@@ -19,13 +19,15 @@ function App(props) {
         <div className="row">
           <BrowserRouter>
             <Switch>
+              <Route path="/">
+                <Dashboard />
+              </Route>
+
               <Route path="/datafeed">
                 <DataFeed />
               </Route>
 
-              <Route path="/">
-                <Dashboard />
-              </Route>
+
             </Switch>
           </BrowserRouter>
         </div>
