@@ -67,10 +67,14 @@ export default function Farm({ subgraph }) {
           return reward.timestamp === price.timestamp
         })
 
-        return calculateAPR({
-          reward: reward.rewardPerShareNotBoosted,
-          pricePerShare: correspondingPrice.pricePerShare,
-        })
+        if (correspondingPrice) {
+          return calculateAPR({
+            reward: reward.rewardPerShareNotBoosted,
+            pricePerShare: correspondingPrice.pricePerShare,
+          })
+        } else {
+          return 0
+        }
       });
 
       console.log({labels, aprs});
