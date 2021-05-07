@@ -8,7 +8,8 @@ import { Address } from "../components";
 import Farm from "./Farm";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
-import fetch from 'isomorphic-fetch';
+// import fetch from 'isomorphic-fetch';
+import axios from 'axios';
 
 export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
