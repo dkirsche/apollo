@@ -2,7 +2,7 @@
 
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { useState, useEffect } from "react";
-import "antd/dist/antd.css";
+// import "antd/dist/antd.css";
 import { Button, Typography, Table, Input } from "antd";
 import { useQuery, gql } from '@apollo/client';
 import { Address } from "../components";
@@ -47,8 +47,8 @@ export default function Farm({ subgraph }) {
         return convertToPrice(h.pricePerShare);
       });
 
-      console.log("labels = ", labels);
-      console.log("prices = ", prices);
+      // console.log("labels = ", labels);
+      // console.log("prices = ", prices);
       // setTimeseries(labels);
 
       setChartData({
@@ -66,13 +66,33 @@ export default function Farm({ subgraph }) {
   }, [loading, error, data])
 
 
+  function imageFor(vault) {
+    const asset = `assets/${vault}.svg`;
+    console.log("asset = ", asset);
+    return asset;
+  }
+
   return (
-    <li class="list-group-item">
-      <div class="row">
-        <div class="col-3">
+    <li className="list-group-item">
+      <div className="row">
+        <div className="col-2">
+
+          <div className="ohm-pairs d-flex mr-4 justify-content-center" style={{width: "64px"}}>
+            <div className="ohm-pair" style={{zIndex: 2}}>
+              <img src={ imageFor('compound') } />
+            </div>
+
+            <div className="ohm-pair" style={{zIndex: 1}}>
+              <img src={ imageFor('usdp') } />
+            </div>
+          </div>
+        </div>
+        <div className="col-1">
+
+
           {subgraph.name}
         </div>
-        <div class="col-9">
+        <div className="col-9">
           <Line data={chartData} options={chartOptions()} />
         </div>
       </div>
