@@ -16,21 +16,19 @@ function App(props) {
       </nav>
 
       <div className="container">
-        <div className="row">
-          <BrowserRouter>
-            <Switch>
-              <Route path="/">
-                <Dashboard />
-              </Route>
+        <BrowserRouter>
+          <Switch>
+            <Route path="/">
+              <Dashboard />
+            </Route>
 
-              <Route path="/datafeed">
-                <DataFeed />
-              </Route>
+            <Route path="/datafeed">
+              <DataFeed />
+            </Route>
 
 
-            </Switch>
-          </BrowserRouter>
-        </div>
+          </Switch>
+        </BrowserRouter>
       </div>
     </div>
   );
