@@ -12,9 +12,8 @@ import fetch from 'isomorphic-fetch';
   const highlight = { marginLeft: 4, marginRight: 8, /*backgroundColor: "#f9f9f9",*/ padding: 4, borderRadius: 4, fontWeight: "bolder" }
 
 function Subgraph(props) {
-
   function graphQLFetcher(graphQLParams) {
-    return fetch(props.subgraphUri, {
+    return fetch("http://localhost:8000/subgraphs/name/scaffold-eth/your-contract", {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(graphQLParams),
