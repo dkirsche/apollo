@@ -120,7 +120,7 @@ export default function Dashboard(props) {
 
         <ul className="list-group mt-4">
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id} subgraph={subgraph} crvPrices={crvPrices}/>
+            return <Farm key={subgraph.id} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
           })}
         </ul>
       </div>

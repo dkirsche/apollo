@@ -13,7 +13,7 @@ import { calculateAPR, convertToPrice, chartOptions } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
-export default function Farm({ subgraph, crvPrices }) {
+export default function Farm({ subgraph, crvPrices, timeframe }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
 
@@ -49,9 +49,25 @@ export default function Farm({ subgraph, crvPrices }) {
   const { data: rewardData, error: errorReward, loading: loadingReward } = useQuery(GET_REWARD_HISTORIES);
 
   useEffect(()=>{
+    const currentTime = new Date().getTime();
+    const startOfDay  = currentTime - currentTime % (24 * 60 * 60);
+
     if (priceData && rewardData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies) {
-      const priceHistory  = priceData.priceHistoryDailies;
-      const rewardHistory = rewardData.rewardHistoryDailies;
+
+      let startTimestamp;
+      console.log("timeframe = ", timeframe)
+      if (timeframe === '7d')
+        startTimestamp = startOfDay - 7 * 24 * 60 * 60 * 1000;
+      else if (timeframe == '30d')
+        startTimestamp = startOfDay - 30 * 24 * 60 * 60 * 1000;
+      else if (timeframe == '90d')
+        startTimestamp = startOfDay - 90 * 24 * 60 * 60 * 1000;
+
+      // console.log("startTimestamp  ", startTimestamp)
+      const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
+      const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
+
+      console.log("priceHistory = ", priceHistory)
 
       const labels  = rewardHistory.map( (h) => {
         return parseInt(h.timestamp);
@@ -94,7 +110,7 @@ export default function Farm({ subgraph, crvPrices }) {
 
     }
 
-  }, [priceData, rewardData])
+  }, [priceData, rewardData, timeframe])
 
 
   function image() {
