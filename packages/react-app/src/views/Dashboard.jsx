@@ -8,7 +8,8 @@ import { Address } from "../components";
 import Farm from "./Farm";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
-import fetch from 'isomorphic-fetch';
+// import fetch from 'isomorphic-fetch';
+import axios from 'axios';
 
 export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
@@ -16,6 +17,7 @@ export default function Dashboard(props) {
   const [selectedSubgraphs, setSelectedSubgraphs] = useState([]);
   const [timeframe, setTimeframe] = useState("7d");
   const [network, setNetwork]     = useState("all");
+  const [crvPrices, setCrvPrices] = useState([])
 
   const SUBGRAPHS_QUERY = gql`
     query Recent
@@ -29,12 +31,29 @@ export default function Dashboard(props) {
 
   const { loading, error, data } = useQuery(SUBGRAPHS_QUERY);
 
-  useEffect(()=>{
-    if (data && data.assets) {
-      setSubgraphs(data.assets)
-      setSelectedSubgraphs(data.assets)
+  useEffect(() => {
+    async function loadData() {
+
+      if (data && data.assets) {
+        setSubgraphs(data.assets)
+        setSelectedSubgraphs(data.assets)
+      }
+
+      // Fetch Coingecko API
+      try {
+        let prices = await axios("https://api.coingecko.com/api/v3/coins/curve-dao-token/market_chart?vs_currency=usd&days=max&interval=daily")
+
+        setCrvPrices(prices.data.prices);
+      } catch {
+        alert("Something went wrong loading the prices. Please reload!");
+      }
     }
+
+    loadData();
+
   }, [loading, error, data])
+
+
 
   const handleSearch = useCallback((evt) => {
     const query = evt.target.value;
@@ -65,17 +84,17 @@ export default function Dashboard(props) {
             </form>
           </div>
           <div className="col-sm-5 d-flex justify-content-end">
-            <label htmlFor="networkChoice" class="col-form-label mr-10 col-2">Network</label>
+            <label htmlFor="networkChoice" className="col-form-label mr-10 col-2">Network</label>
 
-            <div class="btn-group" role="group" id="networkChoice" aria-label="Basic radio toggle button group">
-              <input type="radio" class="btn-check" name="network" id="network_all" autocomplete="off" checked={network === 'all'} onClick={() => { updateNetwork('all') } } />
-              <label class="btn btn-outline-primary" htmlFor="network_all">All</label>
+            <div className="btn-group" role="group" id="networkChoice" aria-label="Basic radio toggle button group">
+              <input type="radio" className="btn-check" name="network" id="network_all" autoComplete="off" checked={network === 'all'} onClick={() => { updateNetwork('all') } } />
+              <label className="btn btn-outline-primary" htmlFor="network_all">All</label>
 
-              <input type="radio" class="btn-check" name="network" id="network_ethereum" autocomplete="off" checked={network === 'ethereum'} onClick={() => { updateNetwork('ethereum') } } />
-              <label class="btn btn-outline-primary" htmlFor="network_ethereum">Ethereum</label>
+              <input type="radio" className="btn-check" name="network" id="network_ethereum" autoComplete="off" checked={network === 'ethereum'} onClick={() => { updateNetwork('ethereum') } } />
+              <label className="btn btn-outline-primary" htmlFor="network_ethereum">Ethereum</label>
 
-              <input type="radio" class="btn-check" name="network" id="network_polygon" autocomplete="off" checked={network === 'polygon'} onClick={() => { updateNetwork('polygon') } } />
-              <label class="btn btn-outline-primary" htmlFor="network_polygon">Polygon</label>
+              <input type="radio" className="btn-check" name="network" id="network_polygon" autoComplete="off" checked={network === 'polygon'} onClick={() => { updateNetwork('polygon') } } />
+              <label className="btn btn-outline-primary" htmlFor="network_polygon">Polygon</label>
             </div>
           </div>
         </div>
@@ -84,24 +103,24 @@ export default function Dashboard(props) {
 
         <div className="row mt-2">
           <div className="col-sm-12 d-flex justify-content-end">
-            <label htmlFor="timeframeChoice" class="col-form-label col-1">Timeframe</label>
+            <label htmlFor="timeframeChoice" className="col-form-label col-1">Timeframe</label>
 
-            <div class="btn-group" role="group" id="timeframeChoice" aria-label="Basic radio toggle button group">
-              <input type="radio" class="btn-check" name="timeframe" id="timeframe_7d" autocomplete="off" checked={timeframe === '7d'} onClick={() => { updateTimeframe('7d') } } />
-              <label class="btn btn-outline-primary" htmlFor="timeframe_7d">Past 7 days</label>
+            <div className="btn-group" role="group" id="timeframeChoice" aria-label="Basic radio toggle button group">
+              <input type="radio" className="btn-check" name="timeframe" id="timeframe_7d" autoComplete="off" checked={timeframe === '7d'} onClick={() => { updateTimeframe('7d') } } />
+              <label className="btn btn-outline-primary" htmlFor="timeframe_7d">Past 7 days</label>
 
-              <input type="radio" class="btn-check" name="timeframe" id="timeframe_30d" autocomplete="off" checked={timeframe === '30d'} onClick={() => { updateTimeframe('30d') } } />
-              <label class="btn btn-outline-primary" htmlFor="timeframe_30d">Past 30 days</label>
+              <input type="radio" className="btn-check" name="timeframe" id="timeframe_30d" autoComplete="off" checked={timeframe === '30d'} onClick={() => { updateTimeframe('30d') } } />
+              <label className="btn btn-outline-primary" htmlFor="timeframe_30d">Past 30 days</label>
 
-              <input type="radio" class="btn-check" name="timeframe" id="timeframe_90d" autocomplete="off" checked={timeframe === '90d'} onClick={() => { updateTimeframe('90d') } } />
-              <label class="btn btn-outline-primary" htmlFor="timeframe_90d">Past 90 days</label>
+              <input type="radio" className="btn-check" name="timeframe" id="timeframe_90d" autoComplete="off" checked={timeframe === '90d'} onClick={() => { updateTimeframe('90d') } } />
+              <label className="btn btn-outline-primary" htmlFor="timeframe_90d">Past 90 days</label>
             </div>
           </div>
         </div>
 
         <ul className="list-group mt-4">
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id} subgraph={subgraph}/>
+            return <Farm key={subgraph.id} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
           })}
         </ul>
       </div>
