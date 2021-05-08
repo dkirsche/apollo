@@ -9,7 +9,7 @@ export function calculateAPR({reward, pricePerShare, pricePerShare_yesterday, as
   const baseAPR = ((pricePerShare - pricePerShare_yesterday) / pricePerShare_yesterday) * 365;
   const rewardAPR = reward/pricePerShare * assetPrice * 365
   const totalAPR = baseAPR + rewardAPR
-  return totalAPR;
+  return totalAPR * 100;
 }
 
 export function chartOptions() {
@@ -20,7 +20,7 @@ export function chartOptions() {
         title: {
           // color: 'red',
           display: true,
-          text: 'Time'
+          text: 'Date'
         },
 
       }
