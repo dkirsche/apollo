@@ -91,7 +91,8 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
       let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
       let latestPriceData = priceHistData.reverse();
-      if (latestPriceData) {
+      if (latestPriceData && latestPriceData[0]) {
+        console.log("latestPriceData = ", latestPriceData)
         const latestPricePerShare = latestPriceData[0].pricePerShare;
         const tvl = latestPricePerShare * subgraph.totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
 
@@ -213,6 +214,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           </div>
 
           <h4 className="text-center">{ prettyName() }</h4>
+          <p>{ subgraph.network }</p>
         </div>
 
         <div className="col-2 align-items-center d-flex flex-column align-self-center">

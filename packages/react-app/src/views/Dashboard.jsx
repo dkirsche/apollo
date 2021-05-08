@@ -43,20 +43,23 @@ export default function Dashboard(props) {
         }
       }`;
 
-  const { loading, error, data } = useQuery(SUBGRAPHS_QUERY_MAINNET);
-  const { loading_matic, error_matic, data_matic } = useQuery(SUBGRAPHS_QUERY_MATIC,
-                                    {
-                                      client: maticClient,
-                                    },
-                                  );
+  const { loading: loadingMainnet, error: errorMainnet, data: mainnetData } = useQuery(SUBGRAPHS_QUERY_MAINNET);
+  const { loading: loadingPolygon, error: errorPolygon, data: polygonData } = useQuery(SUBGRAPHS_QUERY_MATIC, { client: maticClient });
 
   useEffect(() => {
     async function loadData() {
 
-      if (data && data.assets && data_matic && data_matic.assets) {
-        let all_assets = [...data.assets, ...data_matic.assets]
-        setSubgraphs(data.assets)
-        setSelectedSubgraphs(data.assets)
+      if (mainnetData && mainnetData.assets && polygonData && polygonData.assets) {
+        const mainnetAssets = mainnetData.assets.map(ass => {
+          return {...ass, network: 'ethereum'}
+        })
+        const polygonAssets = polygonData.assets.map(ass => {
+          return {...ass, network: 'polygon'}
+        })
+
+        const assets = [...mainnetAssets, ...polygonAssets]
+        setSubgraphs(assets)
+        setSelectedSubgraphs(assets)
       }
 
       // Fetch Coingecko API
@@ -71,7 +74,7 @@ export default function Dashboard(props) {
 
     loadData();
 
-  }, [loading, error, data])
+  }, [loadingMainnet, errorMainnet, mainnetData])
 
 
 
@@ -81,13 +84,22 @@ export default function Dashboard(props) {
     if (!query) {
       setSelectedSubgraphs(subgraphs)
     } else {
-      setSelectedSubgraphs(selectedSubgraphs.filter(asset => asset.name.toLowerCase().indexOf(query) >= 0));
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.name.toLowerCase().indexOf(query) >= 0));
     }
   }, [subgraphs])
 
   const updateNetwork = useCallback((network) => {
+    console.log('network = ', network)
+    console.log("selectedSubgraphs = ", subgraphs)
+
+    if (network === 'all') {
+      setSelectedSubgraphs(subgraphs)
+    } else {
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.network === network));
+    }
+
     setNetwork(network);
-  }, [])
+  }, [subgraphs])
 
   const updateTimeframe = useCallback((timeframe) => {
     setTimeframe(timeframe);
@@ -165,7 +177,7 @@ export default function Dashboard(props) {
 
 
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
+            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
           })}
         </ul>
       </div>
