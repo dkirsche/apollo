@@ -14,16 +14,48 @@ export function calculateAPR({reward, pricePerShare, pricePerShare_yesterday, as
 
 export function chartOptions() {
   return {
+    maintainAspectRatio: false,
+
+    plugins: {
+      legend: {
+        display: false
+      },
+    },
+
     scales: {
+
+      // x: {
+      //   min: 0,
+      //   title: {
+      //     // color: 'red',
+      //     display: true,
+      //     text: 'Date'
+      //   },
+      // },
+
       x: {
-        min: 0,
-        title: {
-          // color: 'red',
-          display: true,
-          text: 'Date'
+        // display: false,
+        grid: {
+          display: false,
+          drawTicks: false,
         },
 
-      }
+        ticks: {
+          autoSkip: true,
+          maxTicksLimit: 20
+        }
+
+        // ticks: {
+        //   maxTicksLimit: 4
+        // }
+
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+      },
+
     }
   }
 }

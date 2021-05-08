@@ -30,3 +30,8 @@ body {
   text-align: center;
   text-indent: 10000px;
 }
+
+
+.farm-chart {
+  height: 300px;
+}
