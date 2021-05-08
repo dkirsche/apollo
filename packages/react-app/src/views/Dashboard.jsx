@@ -119,6 +119,27 @@ export default function Dashboard(props) {
         </div>
 
         <ul className="list-group mt-4">
+          <li className="list-group-item">
+            <div className="row">
+              <div className="col-3 align-items-center d-flex flex-column align-self-center">
+                <div className="d-flex mb-2 justify-content-center">
+                  <h4 className="mb-0">Pool</h4>
+                </div>
+              </div>
+
+              <div className="col-4">
+                <p></p>
+              </div>
+
+              <div className="col-5 align-items-center d-flex flex-column align-self-center">
+                <h4 className="mb-0">Latest APR</h4>
+              </div>
+            </div>
+          </li>
+
+
+
+
           { selectedSubgraphs.map(function(subgraph) {
             return <Farm key={subgraph.id} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
           })}

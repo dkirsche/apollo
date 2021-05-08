@@ -16,6 +16,7 @@ import CurveImg from '../assets/curve.png';
 export default function Farm({ subgraph, crvPrices, timeframe }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
+  const [lastAPR, setLastAPR]     = useState(null);
 
   const GET_PRICE_HISTORIES = gql`
   query Recent
@@ -55,7 +56,6 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
     if (priceData && rewardData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies) {
 
       let startTimestamp;
-      console.log("timeframe = ", timeframe)
       if (timeframe === '7d')
         startTimestamp = startOfDay - 8 * 24 * 60 * 60 * 1000;
       else if (timeframe == '30d')
@@ -66,8 +66,6 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       // console.log("startTimestamp  ", startTimestamp)
       const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
-
-      console.log("priceHistory = ", priceHistory)
 
       let labels  = rewardHistory.map( (h) => {
         const label =new Date(parseInt(h.timestamp * 1000))
@@ -100,8 +98,17 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
         }
       });
       //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
-      aprs = aprs.reverse()
-      aprs.shift()
+      aprs = aprs.reverse();
+      aprs.shift();
+
+      console.log("Aprs = ", aprs)
+      if(aprs[0]) {
+        setLastAPR(aprs[0].toFixed(2));
+      }
+
+
+      // aprs = aprs.map(apr => { return apr.toString() + "%" })
+      console.log("aprs = ", aprs)
       labels=labels.reverse()
       labels.shift()
       console.log({labels, aprs});
@@ -169,8 +176,15 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
         </div>
 
-        <div className="col-9">
-          <Line data={chartData} options={chartOptions()} />
+        <div className="col-4">
+          <div class="farm-chart">
+            <Line data={chartData} options={chartOptions()} />
+          </div>
+        </div>
+
+        <div className="col-5 align-items-center d-flex flex-column align-self-center">
+          <h1 className="mb-1">{ lastAPR }%</h1>
+          <p className="text-muted">Latest APR</p>
         </div>
       </div>
     </li>
