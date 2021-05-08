@@ -3,13 +3,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "antd/dist/antd.css";
 import { Button, Typography, Table, Input } from "antd";
-import { useQuery, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import { Address } from "../components";
 import Farm from "./Farm";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 // import fetch from 'isomorphic-fetch';
 import axios from 'axios';
+
+const maticClient = new ApolloClient({
+  uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
+  cache: new InMemoryCache()
+});
 
 export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
@@ -19,7 +24,7 @@ export default function Dashboard(props) {
   const [network, setNetwork]     = useState("all");
   const [crvPrices, setCrvPrices] = useState([])
 
-  const SUBGRAPHS_QUERY = gql`
+  const SUBGRAPHS_QUERY_MAINNET = gql`
     query Recent
     {
       assets {
@@ -28,15 +33,33 @@ export default function Dashboard(props) {
         totalSupply
       }
     }`;
+    const SUBGRAPHS_QUERY_MATIC = gql`
+      query Recent
+      {
+        assets {
+          id
+          name
+          totalSupply
+        }
+      }`;
 
-  const { loading, error, data } = useQuery(SUBGRAPHS_QUERY);
+  const { loading: loadingMainnet, error: errorMainnet, data: mainnetData } = useQuery(SUBGRAPHS_QUERY_MAINNET);
+  const { loading: loadingPolygon, error: errorPolygon, data: polygonData } = useQuery(SUBGRAPHS_QUERY_MATIC, { client: maticClient });
 
   useEffect(() => {
     async function loadData() {
 
-      if (data && data.assets) {
-        setSubgraphs(data.assets)
-        setSelectedSubgraphs(data.assets)
+      if (mainnetData && mainnetData.assets && polygonData && polygonData.assets) {
+        const mainnetAssets = mainnetData.assets.map(ass => {
+          return {...ass, network: 'ethereum'}
+        })
+        const polygonAssets = polygonData.assets.map(ass => {
+          return {...ass, network: 'polygon'}
+        })
+
+        const assets = [...mainnetAssets, ...polygonAssets]
+        setSubgraphs(assets)
+        setSelectedSubgraphs(assets)
       }
 
       // Fetch Coingecko API
@@ -51,7 +74,7 @@ export default function Dashboard(props) {
 
     loadData();
 
-  }, [loading, error, data])
+  }, [loadingMainnet, errorMainnet, mainnetData])
 
 
 
@@ -61,13 +84,22 @@ export default function Dashboard(props) {
     if (!query) {
       setSelectedSubgraphs(subgraphs)
     } else {
-      setSelectedSubgraphs(selectedSubgraphs.filter(asset => asset.name.toLowerCase().indexOf(query) >= 0));
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.name.toLowerCase().indexOf(query) >= 0));
     }
   }, [subgraphs])
 
   const updateNetwork = useCallback((network) => {
+    console.log('network = ', network)
+    console.log("selectedSubgraphs = ", subgraphs)
+
+    if (network === 'all') {
+      setSelectedSubgraphs(subgraphs)
+    } else {
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.network === network));
+    }
+
     setNetwork(network);
-  }, [])
+  }, [subgraphs])
 
   const updateTimeframe = useCallback((timeframe) => {
     setTimeframe(timeframe);
@@ -145,7 +177,7 @@ export default function Dashboard(props) {
 
 
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
+            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
           })}
         </ul>
       </div>

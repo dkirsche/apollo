@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 // import "antd/dist/antd.css";
 import { Button, Typography, Table, Input } from "antd";
-import { useQuery, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
@@ -12,6 +12,11 @@ import fetch from 'isomorphic-fetch';
 import { calculateAPR, convertToPrice, chartOptions } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
+
+const maticClient = new ApolloClient({
+  uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
+  cache: new InMemoryCache()
+});
 
 export default function Farm({ subgraph, crvPrices, timeframe }) {
   const [timeseries, setTimeseries] = useState([]);
@@ -46,15 +51,32 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       timestamp
     }
   }`;
+  const GET_REWARD_OTHER = gql`
+  query Recent
+  {
+    rewardOthers(first: 100, orderBy: timestamp, orderDirection: desc){
+      asset {
+          id
+        }
+      gaugeId
+      rewardIntegral
+      timestamp
+    }
+  }`;
 
   const { data: priceData,  error: errorPrice,  loading: loadingPrice }  = useQuery(GET_PRICE_HISTORIES);
   const { data: rewardData, error: errorReward, loading: loadingReward } = useQuery(GET_REWARD_HISTORIES);
-
+  const { data: rewardOtherData, error: errorRewardOther, loading: loadingRewardOther } = useQuery(GET_REWARD_OTHER,
+                                                                                          {
+                                                                                            client: maticClient,
+                                                                                          },
+                                                                                        );
+  //console.log({rewardOtherData, errorRewardOther, loadingRewardOther});
   useEffect(()=>{
     const currentTime = new Date().getTime();
     const startOfDay  = currentTime - currentTime % (24 * 60 * 60);
 
-    if (priceData && rewardData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies) {
+    if (priceData && rewardData && rewardOtherData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies && rewardOtherData.rewardOthers) {
 
       let startTimestamp;
       if (timeframe === '7d')
@@ -69,7 +91,8 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
       let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
       let latestPriceData = priceHistData.reverse();
-      if (latestPriceData) {
+      if (latestPriceData && latestPriceData[0]) {
+        console.log("latestPriceData = ", latestPriceData)
         const latestPricePerShare = latestPriceData[0].pricePerShare;
         const tvl = latestPricePerShare * subgraph.totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
 
@@ -83,6 +106,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       // console.log("startTimestamp  ", startTimestamp)
       const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
+      const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
       let labels  = rewardHistory.map( (h) => {
         const label = new Date(parseInt(h.timestamp * 1000))
@@ -190,6 +214,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           </div>
 
           <h4 className="text-center">{ prettyName() }</h4>
+          <p>{ subgraph.network }</p>
         </div>
 
         <div className="col-2 align-items-center d-flex flex-column align-self-center">
