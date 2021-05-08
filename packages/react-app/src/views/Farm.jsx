@@ -13,7 +13,7 @@ import { calculateAPR, convertToPrice, chartOptions } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
-export default function Farm({ subgraph }) {
+export default function Farm({ subgraph, crvPrices }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
 
@@ -49,13 +49,9 @@ export default function Farm({ subgraph }) {
   const { data: rewardData, error: errorReward, loading: loadingReward } = useQuery(GET_REWARD_HISTORIES);
 
   useEffect(()=>{
-    console.log("RESULT = ", {priceData, rewardData})
-
     if (priceData && rewardData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies) {
       const priceHistory  = priceData.priceHistoryDailies;
       const rewardHistory = rewardData.rewardHistoryDailies;
-
-      console.log("priceHistory = ", priceHistory)
 
       const labels  = rewardHistory.map( (h) => {
         return parseInt(h.timestamp);
@@ -65,12 +61,19 @@ export default function Farm({ subgraph }) {
         // Iterate over price history finding the corresponding timestamp.
         const correspondingPrice = priceHistory.find(price => {
           return reward.timestamp === price.timestamp
-        })
+        });
 
-        if (correspondingPrice) {
+        const correspondingAssetPrice = crvPrices.find(price => {
+          const assetTimestamp  = price[0];
+          const rewardTimestamp = reward.timestamp * 1000; // start of day
+          return assetTimestamp >= rewardTimestamp && assetTimestamp <= rewardTimestamp + 60 * 60 * 24 * 1000
+        });
+
+        if (correspondingPrice && correspondingAssetPrice) {
           return calculateAPR({
             reward: reward.rewardPerShareNotBoosted,
             pricePerShare: correspondingPrice.pricePerShare,
+            assetPrice: correspondingAssetPrice[1],
           })
         } else {
           return 0
