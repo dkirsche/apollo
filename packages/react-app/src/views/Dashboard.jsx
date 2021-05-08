@@ -3,13 +3,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "antd/dist/antd.css";
 import { Button, Typography, Table, Input } from "antd";
-import { useQuery, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import { Address } from "../components";
 import Farm from "./Farm";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 // import fetch from 'isomorphic-fetch';
 import axios from 'axios';
+
+const maticClient = new ApolloClient({
+  uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
+  cache: new InMemoryCache()
+});
 
 export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
@@ -19,7 +24,7 @@ export default function Dashboard(props) {
   const [network, setNetwork]     = useState("all");
   const [crvPrices, setCrvPrices] = useState([])
 
-  const SUBGRAPHS_QUERY = gql`
+  const SUBGRAPHS_QUERY_MAINNET = gql`
     query Recent
     {
       assets {
@@ -28,13 +33,28 @@ export default function Dashboard(props) {
         totalSupply
       }
     }`;
+    const SUBGRAPHS_QUERY_MATIC = gql`
+      query Recent
+      {
+        assets {
+          id
+          name
+          totalSupply
+        }
+      }`;
 
-  const { loading, error, data } = useQuery(SUBGRAPHS_QUERY);
+  const { loading, error, data } = useQuery(SUBGRAPHS_QUERY_MAINNET);
+  const { loading_matic, error_matic, data_matic } = useQuery(SUBGRAPHS_QUERY_MATIC,
+                                    {
+                                      client: maticClient,
+                                    },
+                                  );
 
   useEffect(() => {
     async function loadData() {
 
-      if (data && data.assets) {
+      if (data && data.assets && data_matic && data_matic.assets) {
+        let all_assets = [...data.assets, ...data_matic.assets]
         setSubgraphs(data.assets)
         setSelectedSubgraphs(data.assets)
       }
