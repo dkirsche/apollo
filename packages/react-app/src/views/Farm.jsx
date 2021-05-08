@@ -57,11 +57,11 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       let startTimestamp;
       console.log("timeframe = ", timeframe)
       if (timeframe === '7d')
-        startTimestamp = startOfDay - 7 * 24 * 60 * 60 * 1000;
+        startTimestamp = startOfDay - 8 * 24 * 60 * 60 * 1000;
       else if (timeframe == '30d')
-        startTimestamp = startOfDay - 30 * 24 * 60 * 60 * 1000;
+        startTimestamp = startOfDay - 31 * 24 * 60 * 60 * 1000;
       else if (timeframe == '90d')
-        startTimestamp = startOfDay - 90 * 24 * 60 * 60 * 1000;
+        startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
 
       // console.log("startTimestamp  ", startTimestamp)
       const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
@@ -69,16 +69,19 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
       console.log("priceHistory = ", priceHistory)
 
-      const labels  = rewardHistory.map( (h) => {
-        return parseInt(h.timestamp);
+      let labels  = rewardHistory.map( (h) => {
+        const label =new Date(parseInt(h.timestamp * 1000))
+        return label.toLocaleDateString("en-US");
       });
 
-      const aprs = rewardHistory.map( reward => {
+      let aprs = rewardHistory.map( reward => {
         // Iterate over price history finding the corresponding timestamp.
         const correspondingPrice = priceHistory.find(price => {
           return reward.timestamp === price.timestamp
         });
-
+        const yesterdayPrice = priceHistory.find(price => {
+          return (reward.timestamp - (24*60*60)) == price.timestamp
+        });
         const correspondingAssetPrice = crvPrices.find(price => {
           const assetTimestamp  = price[0];
           const rewardTimestamp = reward.timestamp * 1000; // start of day
@@ -88,14 +91,19 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
         if (correspondingPrice && correspondingAssetPrice) {
           return calculateAPR({
             reward: reward.rewardPerShareNotBoosted,
-            pricePerShare: correspondingPrice.pricePerShare,
+            pricePerShare: correspondingPrice?.pricePerShare,
+            pricePerShare_yesterday: yesterdayPrice?.pricePerShare,
             assetPrice: correspondingAssetPrice[1],
           })
         } else {
           return 0
         }
       });
-
+      //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
+      aprs = aprs.reverse()
+      aprs.shift()
+      labels=labels.reverse()
+      labels.shift()
       console.log({labels, aprs});
 
       setChartData({

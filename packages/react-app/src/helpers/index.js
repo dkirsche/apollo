@@ -4,9 +4,12 @@ export function convertToPrice(numberInWei) {
   return numberInWei / Math.pow(10, 18);
 }
 
-export function calculateAPR({reward, pricePerShare, assetPrice}) {
-  const virtualPriceRatio = (reward / pricePerShare);
-  return virtualPriceRatio * assetPrice;
+export function calculateAPR({reward, pricePerShare, pricePerShare_yesterday, assetPrice}) {
+  console.log({reward, pricePerShare, pricePerShare_yesterday, assetPrice})
+  const baseAPR = ((pricePerShare - pricePerShare_yesterday) / pricePerShare_yesterday) * 365;
+  const rewardAPR = reward/pricePerShare * assetPrice * 365
+  const totalAPR = baseAPR + rewardAPR
+  return totalAPR * 100;
 }
 
 export function chartOptions() {
@@ -17,7 +20,7 @@ export function chartOptions() {
         title: {
           // color: 'red',
           display: true,
-          text: 'Time'
+          text: 'Date'
         },
 
       }
