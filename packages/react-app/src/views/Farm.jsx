@@ -17,6 +17,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
   const [lastAPR, setLastAPR]     = useState(null);
+  const [tvl, setTvl]     = useState(null);
 
   const GET_PRICE_HISTORIES = gql`
   query Recent
@@ -63,12 +64,28 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       else if (timeframe == '90d')
         startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
 
+      // Set TVL
+      // console.log("subgraph = ", subgraph)
+
+      let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
+      let latestPriceData = priceHistData.reverse();
+      if (latestPriceData) {
+        const latestPricePerShare = latestPriceData[0].pricePerShare;
+        const tvl = latestPricePerShare * subgraph.totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
+
+        // Convert to Billys
+        const prettyTVL = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(tvl);
+        setTvl(prettyTVL)
+      }
+
+
+
       // console.log("startTimestamp  ", startTimestamp)
       const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
 
       let labels  = rewardHistory.map( (h) => {
-        const label =new Date(parseInt(h.timestamp * 1000))
+        const label = new Date(parseInt(h.timestamp * 1000))
         return label.toLocaleDateString("en-US");
       });
 
@@ -173,7 +190,10 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           </div>
 
           <h4 className="text-center">{ prettyName() }</h4>
+        </div>
 
+        <div className="col-2 align-items-center d-flex flex-column align-self-center">
+          <h1 className="mb-1">{ tvl }</h1>
         </div>
 
         <div className="col-4">
@@ -182,9 +202,8 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           </div>
         </div>
 
-        <div className="col-5 align-items-center d-flex flex-column align-self-center">
+        <div className="col-3 align-items-center d-flex flex-column align-self-center">
           <h1 className="mb-1">{ lastAPR }%</h1>
-          <p className="text-muted">Latest APR</p>
         </div>
       </div>
     </li>
