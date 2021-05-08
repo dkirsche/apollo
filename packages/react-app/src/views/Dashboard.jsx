@@ -15,7 +15,7 @@ export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
   const [subgraphs, setSubgraphs] = useState([]);
   const [selectedSubgraphs, setSelectedSubgraphs] = useState([]);
-  const [timeframe, setTimeframe] = useState("7d");
+  const [timeframe, setTimeframe] = useState("30d");
   const [network, setNetwork]     = useState("all");
   const [crvPrices, setCrvPrices] = useState([])
 
