@@ -20,7 +20,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const GET_PRICE_HISTORIES = gql`
   query Recent
   {
-    priceHistoryDailies(first: 100, orderBy: timestamp, orderDirection: asc, where: {asset: "${subgraph.id}"}) {
+    priceHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
       id
       pricePerShare
       timestamp
@@ -30,7 +30,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const GET_REWARD_HISTORIES = gql`
   query Recent
   {
-    rewardHistoryDailies(first: 100, orderBy: timestamp, orderDirection: asc, where: {asset: "${subgraph.id}"}) {
+    rewardHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
       asset {
         id
       }
@@ -69,11 +69,12 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
       console.log("priceHistory = ", priceHistory)
 
-      const labels  = rewardHistory.map( (h) => {
-        return parseInt(h.timestamp);
+      let labels  = rewardHistory.map( (h) => {
+        const label =new Date(parseInt(h.timestamp * 1000))
+        return label.toLocaleDateString("en-US");
       });
 
-      const aprs = rewardHistory.map( reward => {
+      let aprs = rewardHistory.map( reward => {
         // Iterate over price history finding the corresponding timestamp.
         const correspondingPrice = priceHistory.find(price => {
           return reward.timestamp === price.timestamp
@@ -98,7 +99,10 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           return 0
         }
       });
+      //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
+      aprs = aprs.reverse()
       aprs.shift()
+      labels=labels.reverse()
       labels.shift()
       console.log({labels, aprs});
 

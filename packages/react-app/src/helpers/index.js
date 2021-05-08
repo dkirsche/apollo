@@ -6,8 +6,10 @@ export function convertToPrice(numberInWei) {
 
 export function calculateAPR({reward, pricePerShare, pricePerShare_yesterday, assetPrice}) {
   console.log({reward, pricePerShare, pricePerShare_yesterday, assetPrice})
-  const virtualPriceRatio = (reward / pricePerShare);
-  return virtualPriceRatio * assetPrice;
+  const baseAPR = ((pricePerShare - pricePerShare_yesterday) / pricePerShare_yesterday) * 365;
+  const rewardAPR = reward/pricePerShare * assetPrice * 365
+  const totalAPR = baseAPR + rewardAPR
+  return totalAPR;
 }
 
 export function chartOptions() {
