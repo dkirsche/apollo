@@ -20,7 +20,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const GET_PRICE_HISTORIES = gql`
   query Recent
   {
-    priceHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
+    priceHistoryDailies(first: 100, orderBy: timestamp, orderDirection: asc, where: {asset: "${subgraph.id}"}) {
       id
       pricePerShare
       timestamp
@@ -30,7 +30,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const GET_REWARD_HISTORIES = gql`
   query Recent
   {
-    rewardHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
+    rewardHistoryDailies(first: 100, orderBy: timestamp, orderDirection: asc, where: {asset: "${subgraph.id}"}) {
       asset {
         id
       }
@@ -57,11 +57,11 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       let startTimestamp;
       console.log("timeframe = ", timeframe)
       if (timeframe === '7d')
-        startTimestamp = startOfDay - 7 * 24 * 60 * 60 * 1000;
+        startTimestamp = startOfDay - 8 * 24 * 60 * 60 * 1000;
       else if (timeframe == '30d')
-        startTimestamp = startOfDay - 30 * 24 * 60 * 60 * 1000;
+        startTimestamp = startOfDay - 31 * 24 * 60 * 60 * 1000;
       else if (timeframe == '90d')
-        startTimestamp = startOfDay - 90 * 24 * 60 * 60 * 1000;
+        startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
 
       // console.log("startTimestamp  ", startTimestamp)
       const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
@@ -78,7 +78,9 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
         const correspondingPrice = priceHistory.find(price => {
           return reward.timestamp === price.timestamp
         });
-
+        const yesterdayPrice = priceHistory.find(price => {
+          return (reward.timestamp - (24*60*60)) == price.timestamp
+        });
         const correspondingAssetPrice = crvPrices.find(price => {
           const assetTimestamp  = price[0];
           const rewardTimestamp = reward.timestamp * 1000; // start of day
@@ -88,14 +90,16 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
         if (correspondingPrice && correspondingAssetPrice) {
           return calculateAPR({
             reward: reward.rewardPerShareNotBoosted,
-            pricePerShare: correspondingPrice.pricePerShare,
+            pricePerShare: correspondingPrice?.pricePerShare,
+            pricePerShare_yesterday: yesterdayPrice?.pricePerShare,
             assetPrice: correspondingAssetPrice[1],
           })
         } else {
           return 0
         }
       });
-
+      aprs.shift()
+      labels.shift()
       console.log({labels, aprs});
 
       setChartData({

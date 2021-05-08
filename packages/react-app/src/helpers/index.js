@@ -4,7 +4,8 @@ export function convertToPrice(numberInWei) {
   return numberInWei / Math.pow(10, 18);
 }
 
-export function calculateAPR({reward, pricePerShare, assetPrice}) {
+export function calculateAPR({reward, pricePerShare, pricePerShare_yesterday, assetPrice}) {
+  console.log({reward, pricePerShare, pricePerShare_yesterday, assetPrice})
   const virtualPriceRatio = (reward / pricePerShare);
   return virtualPriceRatio * assetPrice;
 }
