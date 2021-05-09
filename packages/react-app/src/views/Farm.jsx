@@ -9,7 +9,7 @@ import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
-import { calculateAPR, convertToPrice, chartOptions } from '../helpers';
+import { calculateRewardOtherAPR, calculateAPR, convertToPrice, chartOptions } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -54,7 +54,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const GET_REWARD_OTHER = gql`
   query Recent
   {
-    rewardOthers(first: 100, orderBy: timestamp, orderDirection: desc){
+    rewardOthers(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}){
       asset {
           id
         }
@@ -66,33 +66,29 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
   const { data: priceData,  error: errorPrice,  loading: loadingPrice }  = useQuery(GET_PRICE_HISTORIES);
   const { data: rewardData, error: errorReward, loading: loadingReward } = useQuery(GET_REWARD_HISTORIES);
-  const { data: rewardOtherData, error: errorRewardOther, loading: loadingRewardOther } = useQuery(GET_REWARD_OTHER,
-                                                                                          {
-                                                                                            client: maticClient,
-                                                                                          },
-                                                                                        );
-  //console.log({rewardOtherData, errorRewardOther, loadingRewardOther});
+  const { data: priceDataPolygon,  error: errorPricePolygon,  loading: loadingPricePolygon }  = useQuery(GET_PRICE_HISTORIES,{client: maticClient});
+  const { data: rewardOtherData, error: errorRewardOther, loading: loadingRewardOther } = useQuery(GET_REWARD_OTHER,{client: maticClient});
+  //console.log({priceDataPolygon, errorPricePolygon, loadingPricePolygon, subgraph});
   useEffect(()=>{
     const currentTime = new Date().getTime();
     const startOfDay  = currentTime - currentTime % (24 * 60 * 60);
 
-    if (priceData && rewardData && rewardOtherData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies && rewardOtherData.rewardOthers) {
+    let startTimestamp;
+    if (timeframe === '7d')
+      startTimestamp = startOfDay - 8 * 24 * 60 * 60 * 1000;
+    else if (timeframe == '30d')
+      startTimestamp = startOfDay - 31 * 24 * 60 * 60 * 1000;
+    else if (timeframe == '90d')
+      startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
 
-      let startTimestamp;
-      if (timeframe === '7d')
-        startTimestamp = startOfDay - 8 * 24 * 60 * 60 * 1000;
-      else if (timeframe == '30d')
-        startTimestamp = startOfDay - 31 * 24 * 60 * 60 * 1000;
-      else if (timeframe == '90d')
-        startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
-
+    if (priceData && rewardData && rewardOtherData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies && rewardOtherData.rewardOthers && priceDataPolygon) {
       // Set TVL
       // console.log("subgraph = ", subgraph)
 
       let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
       let latestPriceData = priceHistData.reverse();
       if (latestPriceData && latestPriceData[0]) {
-        console.log("latestPriceData = ", latestPriceData)
+        //console.log("latestPriceData = ", latestPriceData)
         const latestPricePerShare = latestPriceData[0].pricePerShare;
         const tvl = latestPricePerShare * subgraph.totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
 
@@ -104,45 +100,59 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
 
       // console.log("startTimestamp  ", startTimestamp)
-      const priceHistory  = priceData.priceHistoryDailies.filter(price =>  price.timestamp * 1000 >= startTimestamp);
+      const priceHistoryAll = mergeData(priceData.priceHistoryDailies,priceDataPolygon.priceHistoryDailies)
+      const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
+
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
-      let labels  = rewardHistory.map( (h) => {
+      console.log({rewardOther, subgraph});
+      let labels  = priceHistory.map( (h) => {
         const label = new Date(parseInt(h.timestamp * 1000))
         return label.toLocaleDateString("en-US");
       });
 
-      let aprs = rewardHistory.map( reward => {
+      let aprs = priceHistory.map( price => {
         // Iterate over price history finding the corresponding timestamp.
-        const correspondingPrice = priceHistory.find(price => {
-          return reward.timestamp === price.timestamp
+        const correspondingReward = rewardHistory.find(reward => {
+          return price.timestamp === reward.timestamp
         });
-        const yesterdayPrice = priceHistory.find(price => {
-          return (reward.timestamp - (24*60*60)) == price.timestamp
+        const correspondingRewardOther_yesterday = rewardOther.find(reward => {
+          return (price.timestamp - (24*60*60)) == reward.timestamp
         });
-        const correspondingAssetPrice = crvPrices.find(price => {
-          const assetTimestamp  = price[0];
-          const rewardTimestamp = reward.timestamp * 1000; // start of day
-          return assetTimestamp >= rewardTimestamp && assetTimestamp <= rewardTimestamp + 60 * 60 * 24 * 1000
+        //Should be the closest to today's timestamp as possible. Creating the upperbound to the next day b/c there should be an upperbound, but ideally the timestamp is much closer to today's timestamp
+        const correspondingRewardOther = rewardOther.find(reward => {
+          return price.timestamp === reward.timestamp
+        });
+        const price_yesterday = priceHistory.find(this_price => {
+          return (price.timestamp - (24*60*60)) == this_price.timestamp
+        });
+        const correspondingAssetPrice = crvPrices.find(this_price => {
+          const assetTimestamp  = this_price[0];
+          const priceHistoryTimestamp = price.timestamp * 1000; // start of day
+          return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
         });
 
-        if (correspondingPrice && correspondingAssetPrice) {
-          return calculateAPR({
-            reward: reward.rewardPerShareNotBoosted,
-            pricePerShare: correspondingPrice?.pricePerShare,
-            pricePerShare_yesterday: yesterdayPrice?.pricePerShare,
-            assetPrice: correspondingAssetPrice[1],
-          })
-        } else {
-          return 0
-        }
+        let basePlusrewardAPR = calculateAPR({
+          reward: correspondingReward?.rewardPerShareNotBoosted || 0,
+          pricePerShare: price?.pricePerShare,
+          pricePerShare_yesterday: price_yesterday?.pricePerShare,
+          assetPrice: correspondingAssetPrice ? correspondingAssetPrice[1] : 0,
+        })
+        let otherRewardAPR = calculateRewardOtherAPR({
+          rewardIntegral: correspondingRewardOther?.rewardIntegral,
+          rewardIntegral_yesterday: correspondingRewardOther_yesterday?.rewardIntegral,
+          rewardIntegralTimeStamp: correspondingRewardOther?.timestamp,
+          rewardIntegralTimeStamp_yesterday: correspondingRewardOther_yesterday?.timestamp,
+          rewardPrice: 0.77, //hardcoding the price of MATIC for now. will need to look this up
+        })
+        return basePlusrewardAPR + otherRewardAPR
       });
       //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
       aprs = aprs.reverse();
       aprs.shift();
 
-      console.log("Aprs = ", aprs)
+      //console.log("Aprs = ", aprs)
       if(aprs[0]) {
         setLastAPR(aprs[0].toFixed(2));
       }
@@ -233,4 +243,15 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       </div>
     </li>
   );
+}
+
+function mergeData(mainnetData,polygonData){
+  const mainnet = mainnetData.map(data => {
+    return {...data, network: 'ethereum'}
+  })
+  const polygon = polygonData.map(data => {
+    return {...data, network: 'polygon'}
+  })
+
+  return [...mainnet, ...polygon]
 }
