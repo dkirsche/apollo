@@ -65,6 +65,26 @@ export function chartOptions() {
   }
 }
 
+// I define risk score as
+// F: Volatility to mean ratio is 75%+
+// D: Volatility to mean ratio is 50%-75%
+// C: ...25-50%%
+// B 10%-25%
+// A: 10% or less
+export function calculateRiskScore(array) {
+  const varCoeff = stDev(array) / mean(array);
+  if (varCoeff < 0.1)
+    return "A"
+  else if (varCoeff < 0.25)
+    return 'B'
+  else if (varCoeff < 0.5)
+    return 'C'
+  else if (varCoeff < 0.75)
+    return 'D'
+  else
+    return 'F'
+}
+
 export function commarize(value) {
   // Alter numbers larger than 1k
   if (value >= 1e3) {
@@ -82,4 +102,12 @@ export function commarize(value) {
 
   // return formatted original number
   return value.toLocaleString()
+}
+
+export function mean(array) {
+  return array.reduce((a, b) => a + b) / array.length;
+}
+
+export function stDev(array) {
+  return Math.sqrt(array.map(x => Math.pow(x - mean(array), 2)).reduce((a, b) => a + b) / array.length)
 }
