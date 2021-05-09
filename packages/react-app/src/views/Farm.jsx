@@ -9,7 +9,7 @@ import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
-import { calculateRewardOtherAPR, calculateAPR, convertToPrice, chartOptions, commarize } from '../helpers';
+import { calculateRewardOtherAPR, calculateAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -21,8 +21,12 @@ const maticClient = new ApolloClient({
 export default function Farm({ subgraph, crvPrices, timeframe }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
-  const [lastAPR, setLastAPR]     = useState(null);
+  const [totalAPR, setTotalAPR]     = useState(null);
+  const [baseAPR, setBaseAPR]     = useState(null);
+  const [rewardAPR, setRewardAPR]     = useState(null);
   const [tvl, setTvl]     = useState(null);
+  const [histVol, setHistVol] = useState(null);
+  const [riskScore, setRiskScore] = useState(null);
 
   const GET_PRICE_HISTORIES = gql`
   query Recent
@@ -154,19 +158,28 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           rewardIntegralTimeStamp_yesterday: correspondingRewardOther_yesterday?.timestamp,
           rewardPrice: 0.77, //hardcoding the price of MATIC for now. will need to look this up
         })
-        return basePlusrewardAPR + otherRewardAPR
+        return {base: basePlusrewardAPR, reward: otherRewardAPR}
       });
 
 
       // Get first element which is ordered by DESC GraphQL query.
       if(aprs[0]) {
-        setLastAPR(aprs[0].toFixed(2));
+        setBaseAPR(aprs[0].base.toFixed(1));
+        setRewardAPR(aprs[0].reward.toFixed(1));
+        setTotalAPR((aprs[0].base + aprs[0].reward).toFixed(1));
       }
 
-
+      // Calculate total APR
       //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
+      aprs = aprs.map(apr => apr.base + apr.reward);
       aprs = aprs.reverse();
       aprs.shift();
+
+
+      // Define historical volatility & risk score
+      console.log("stDev(aprs) = ", stDev(aprs))
+      setHistVol(stDev(aprs).toFixed(1));
+      setRiskScore(calculateRiskScore(aprs))
 
 
       // aprs = aprs.map(apr => { return apr.toString() + "%" })
@@ -221,7 +234,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   return (
     <li className="list-group-item">
       <div className="row">
-        <div className="col-3 align-items-center d-flex flex-column align-self-center">
+        <div className="col-2 align-items-center d-flex flex-column align-self-center">
           <div className="d-flex mb-2 justify-content-center">
             <div className="d-flex" style={{width: "100px"}}>
               <div className="farm-pair" style={{zIndex: 1}}>
@@ -239,8 +252,8 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           <span class="badge bg-warning text-dark">{ subgraph.network }</span>
         </div>
 
-        <div className="col-2 align-items-center d-flex flex-column align-self-center">
-          <h1 className="mb-1">{ tvl }</h1>
+        <div className="col-1 align-items-center d-flex flex-column align-self-center">
+          <h4 className="mb-1">{ tvl }</h4>
         </div>
 
         <div className="col-4">
@@ -249,8 +262,14 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           </div>
         </div>
 
-        <div className="col-3 align-items-center d-flex flex-column align-self-center">
-          <h1 className="mb-1">{ lastAPR }%</h1>
+        <div className="col-2 align-items-center d-flex flex-column align-self-center">
+          <h1 className="mb-1">{ totalAPR }%</h1>
+          <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
+        </div>
+
+        <div className="col-2 align-items-center d-flex flex-column align-self-center">
+          <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
+          <p className="text-muted">+/- { histVol}%</p>
         </div>
       </div>
     </li>
