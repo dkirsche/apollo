@@ -35,17 +35,13 @@ export function chartOptions() {
       },
     },
 
+    elements: {
+      point:{
+        radius: 0
+      }
+    },
+
     scales: {
-
-      // x: {
-      //   min: 0,
-      //   title: {
-      //     // color: 'red',
-      //     display: true,
-      //     text: 'Date'
-      //   },
-      // },
-
       x: {
         // display: false,
         grid: {
@@ -55,12 +51,8 @@ export function chartOptions() {
 
         ticks: {
           autoSkip: true,
-          maxTicksLimit: 20
+          maxTicksLimit: 8
         }
-
-        // ticks: {
-        //   maxTicksLimit: 4
-        // }
 
       },
       y: {
