@@ -9,7 +9,7 @@ import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
-import { calculateRewardOtherAPR, calculateAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore } from '../helpers';
+import { calculateRewardOtherAPR, calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -145,10 +145,13 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
         });
 
-        let basePlusrewardAPR = calculateAPR({
-          reward: correspondingReward?.rewardPerShareNotBoosted || 0,
+        let baseAPR = calculateBaseAPR({
           pricePerShare: price?.pricePerShare,
           pricePerShare_yesterday: price_yesterday?.pricePerShare,
+        })
+        let crvRewardAPR = calculateCrvAPR({
+          reward: correspondingReward?.rewardPerShareNotBoosted || 0,
+          pricePerShare: price?.pricePerShare,
           assetPrice: correspondingAssetPrice ? correspondingAssetPrice[1] : 0,
         })
         let otherRewardAPR = calculateRewardOtherAPR({
@@ -158,7 +161,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           rewardIntegralTimeStamp_yesterday: correspondingRewardOther_yesterday?.timestamp,
           rewardPrice: 0.77, //hardcoding the price of MATIC for now. will need to look this up
         })
-        return {base: basePlusrewardAPR, reward: otherRewardAPR}
+        return {base: baseAPR, reward: otherRewardAPR + crvRewardAPR}
       });
 
 
