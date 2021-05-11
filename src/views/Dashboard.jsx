@@ -81,7 +81,7 @@ export default function Dashboard(props) {
 
 
   const handleSearch = useCallback((evt) => {
-    const query = evt.target.value;
+    const query = evt.target.value.toLowerCase();
 
     if (!query) {
       setSelectedSubgraphs(subgraphs)
