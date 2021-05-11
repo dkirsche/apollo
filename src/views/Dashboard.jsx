@@ -23,6 +23,7 @@ export default function Dashboard(props) {
   const [timeframe, setTimeframe] = useState("30d");
   const [network, setNetwork]     = useState("all");
   const [crvPrices, setCrvPrices] = useState([])
+  const [maticPrices, setMaticPrices] = useState([])
 
   const SUBGRAPHS_QUERY_MAINNET = gql`
     query Recent
@@ -66,9 +67,16 @@ export default function Dashboard(props) {
 
       // Fetch Coingecko API
       try {
-        let prices = await axios("https://api.coingecko.com/api/v3/coins/curve-dao-token/market_chart?vs_currency=usd&days=max&interval=daily")
+        let crvPrices = await axios("https://api.coingecko.com/api/v3/coins/curve-dao-token/market_chart?vs_currency=usd&days=90&interval=daily")
 
-        setCrvPrices(prices.data.prices);
+        setCrvPrices(crvPrices.data.prices);
+      } catch {
+        alert("Something went wrong loading the prices. Please reload!");
+      }
+      try {
+        let maticPrices = await axios("https://api.coingecko.com/api/v3/coins/matic-network/market_chart?vs_currency=usd&days=90&interval=daily")
+
+        setMaticPrices(maticPrices.data.prices);
       } catch {
         alert("Something went wrong loading the prices. Please reload!");
       }
@@ -81,7 +89,7 @@ export default function Dashboard(props) {
 
 
   const handleSearch = useCallback((evt) => {
-    const query = evt.target.value;
+    const query = evt.target.value.toLowerCase();
 
     if (!query) {
       setSelectedSubgraphs(subgraphs)
@@ -182,7 +190,7 @@ export default function Dashboard(props) {
 
 
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} timeframe={timeframe}/>
+            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
           })}
         </ul>
       </div>
