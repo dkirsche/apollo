@@ -11,7 +11,7 @@ function App(props) {
     <div>
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container-fluid">
-          <a className="navbar-brand" href="#">WiseFarmer</a>
+          <a className="navbar-brand" href="#">ChainYield</a>
         </div>
       </nav>
 
