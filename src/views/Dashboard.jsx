@@ -50,6 +50,9 @@ export default function Dashboard(props) {
   useEffect(() => {
     async function loadData() {
 
+      console.log("mainnetData = ", mainnetData)
+      console.log("polygonData = ", polygonData)
+
       if (mainnetData && mainnetData.assets && polygonData && polygonData.assets) {
         const mainnetAssets = mainnetData.assets.map(ass => {
           return {...ass, network: 'ethereum'}
@@ -59,6 +62,7 @@ export default function Dashboard(props) {
         const polygonAssets = polygonData.assets.map(ass => {
           return {...ass, network: 'polygon'}
         })
+
 
         const assets = [...mainnetAssets, ...polygonAssets]
         setSubgraphs(assets)
@@ -84,7 +88,7 @@ export default function Dashboard(props) {
 
     loadData();
 
-  }, [loadingMainnet, errorMainnet, mainnetData])
+  }, [mainnetData, polygonData])
 
 
 
