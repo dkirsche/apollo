@@ -24,6 +24,7 @@ export default function Dashboard(props) {
   const [network, setNetwork]     = useState("all");
   const [crvPrices, setCrvPrices] = useState([])
   const [maticPrices, setMaticPrices] = useState([])
+  const [loading, setLoading] = useState(true);
 
   const SUBGRAPHS_QUERY_MAINNET = gql`
     query Recent
@@ -67,6 +68,8 @@ export default function Dashboard(props) {
         const assets = [...mainnetAssets, ...polygonAssets]
         setSubgraphs(assets)
         setSelectedSubgraphs(assets)
+
+        setLoading(false);
       }
 
       // Fetch Coingecko API
@@ -164,7 +167,14 @@ export default function Dashboard(props) {
           </div>
         </div>
 
-        <ul className="list-group mt-4">
+        {loading && <div className="row mt-2">
+          <div className="col-12 text-center">
+            <i className="fa fa-sync fa-spin" style={{fontSize: "32px"}} />
+            <h1>Loading subgraphs</h1>
+          </div>
+        </div>}
+
+        {!loading && <ul className="list-group mt-4">
           <li className="list-group-item">
             <div className="row">
               <div className="col-2 align-items-center d-flex flex-column align-self-center">
@@ -190,13 +200,12 @@ export default function Dashboard(props) {
             </div>
           </li>
 
-
-
-
           { selectedSubgraphs.map(function(subgraph) {
             return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
           })}
-        </ul>
+        </ul>}
+
+
       </div>
     </div>
   );
