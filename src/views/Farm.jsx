@@ -18,7 +18,7 @@ const maticClient = new ApolloClient({
   cache: new InMemoryCache()
 });
 
-export default function Farm({ subgraph, crvPrices, timeframe }) {
+export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
   const [timeseries, setTimeseries] = useState([]);
   const [chartData, setChartData]   = useState({});
   const [totalAPR, setTotalAPR]     = useState(null);
@@ -27,7 +27,8 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
   const [tvl, setTvl]     = useState(null);
   const [histVol, setHistVol] = useState(null);
   const [riskScore, setRiskScore] = useState(null);
-
+  console.log ({crvPrices})
+  console.log ({maticPrices})
   const GET_PRICE_HISTORIES = gql`
   query Recent
   {
@@ -144,6 +145,11 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           const priceHistoryTimestamp = price.timestamp * 1000; // start of day
           return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
         });
+        const correspondingMaticPrice = maticPrices.find(this_price => {
+          const assetTimestamp  = this_price[0];
+          const priceHistoryTimestamp = price.timestamp * 1000; // start of day
+          return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
+        });
 
         let baseAPR = calculateBaseAPR({
           pricePerShare: price?.pricePerShare,
@@ -159,7 +165,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
           rewardIntegral_yesterday: correspondingRewardOther_yesterday?.rewardIntegral,
           rewardIntegralTimeStamp: correspondingRewardOther?.timestamp,
           rewardIntegralTimeStamp_yesterday: correspondingRewardOther_yesterday?.timestamp,
-          rewardPrice: 0.77, //hardcoding the price of MATIC for now. will need to look this up
+          rewardPrice: correspondingMaticPrice ? correspondingMaticPrice[1] : 0,
         })
         return {base: baseAPR, reward: otherRewardAPR + crvRewardAPR}
       });
