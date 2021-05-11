@@ -62,6 +62,7 @@ export function chartOptions() {
 
       },
       y: {
+        suggestedMin:0,
         grid: {
           display: false,
         },
