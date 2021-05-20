@@ -1,4 +1,3 @@
-export { default as Transactor } from "./Transactor";
 
 export function convertToPrice(numberInWei) {
   return numberInWei / Math.pow(10, 18);

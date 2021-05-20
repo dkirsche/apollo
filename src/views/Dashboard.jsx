@@ -1,10 +1,8 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 
 import React, { useState, useEffect, useCallback } from "react";
-import "antd/dist/antd.css";
-import { Button, Typography, Table, Input } from "antd";
+// import "antd/dist/antd.css";
 import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
-import { Address } from "../components";
 import Farm from "./Farm";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';

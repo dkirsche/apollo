@@ -5,7 +5,6 @@ import React, { useState, useEffect } from "react";
 // import "antd/dist/antd.css";
 import { Button, Typography, Table, Input } from "antd";
 import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
-import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
