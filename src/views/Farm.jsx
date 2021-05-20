@@ -6,7 +6,7 @@ import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
-import { calculateRewardOtherAPR, calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore, calculateTVL } from '../helpers';
+import { calculateRewardOtherAPR, calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore, calculateTVL, calculateAPR, timestampForTimeframe } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -73,39 +73,9 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
   const { data: rewardOtherData, error: errorRewardOther, loading: loadingRewardOther } = useQuery(GET_REWARD_OTHER,{client: maticClient});
 
   useEffect(()=>{
-    const currentTime = new Date().getTime();
-    const startOfDay  = currentTime - currentTime % (24 * 60 * 60);
-
-    console.log("priceDataPolygon = ", priceDataPolygon)
-
-    let startTimestamp;
-    if (timeframe === '7d')
-      startTimestamp = startOfDay - 8 * 24 * 60 * 60 * 1000;
-    else if (timeframe == '30d')
-      startTimestamp = startOfDay - 31 * 24 * 60 * 60 * 1000;
-    else if (timeframe == '90d')
-      startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
-
-
-    console.log("loadingPrice = ", loadingPrice)
-    console.log("loadingReward = ", loadingReward)
-
-    if (!loadingPrice && !loadingPricePolygon) {
-      let latestPriceData;
-      if (subgraph.network === 'ethereum') {
-        let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
-        latestPriceData = priceHistData.reverse();
-      } else {
-        let priceHistData   = Object.assign([], priceDataPolygon.priceHistoryDailies);
-        latestPriceData = priceHistData.reverse();
-      }
-
-      const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
-      setTvl( "$" + prettyTVL )
-    }
-
 
     if (!loadingPrice && !loadingPricePolygon && !loadingReward && !loadingRewardOther) {
+      const startTimestamp = timestampForTimeframe({timeframe})
 
       const priceHistoryAll = mergeData(priceData.priceHistoryDailies,priceDataPolygon.priceHistoryDailies)
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
@@ -113,52 +83,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
-
-      let aprs = priceHistory.map( price => {
-        // Iterate over price history finding the corresponding timestamp.
-        const correspondingReward = rewardHistory.find(reward => {
-          return price.timestamp === reward.timestamp
-        });
-        const correspondingRewardOther_yesterday = rewardOther.find(reward => {
-          return (price.timestamp - (24*60*60)) == reward.timestamp
-        });
-        //Should be the closest to today's timestamp as possible. Creating the upperbound to the next day b/c there should be an upperbound, but ideally the timestamp is much closer to today's timestamp
-        const correspondingRewardOther = rewardOther.find(reward => {
-          return price.timestamp === reward.timestamp
-        });
-        const price_yesterday = priceHistory.find(this_price => {
-          return (price.timestamp - (24*60*60)) == this_price.timestamp
-        });
-        const correspondingAssetPrice = crvPrices.find(this_price => {
-          const assetTimestamp  = this_price[0];
-          const priceHistoryTimestamp = price.timestamp * 1000; // start of day
-          return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
-        });
-        const correspondingMaticPrice = maticPrices.find(this_price => {
-          const assetTimestamp  = this_price[0];
-          const priceHistoryTimestamp = price.timestamp * 1000; // start of day
-          return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
-        });
-
-        let baseAPR = calculateBaseAPR({
-          pricePerShare: price?.pricePerShare,
-          pricePerShare_yesterday: price_yesterday?.pricePerShare,
-        })
-        let crvRewardAPR = calculateCrvAPR({
-          reward: correspondingReward?.rewardPerShareNotBoosted || 0,
-          pricePerShare: price?.pricePerShare,
-          assetPrice: correspondingAssetPrice ? correspondingAssetPrice[1] : 0,
-        })
-        let otherRewardAPR = calculateRewardOtherAPR({
-          rewardIntegral: correspondingRewardOther?.rewardIntegral,
-          rewardIntegral_yesterday: correspondingRewardOther_yesterday?.rewardIntegral,
-          rewardIntegralTimeStamp: correspondingRewardOther?.timestamp,
-          rewardIntegralTimeStamp_yesterday: correspondingRewardOther_yesterday?.timestamp,
-          rewardPrice: correspondingMaticPrice ? correspondingMaticPrice[1] : 0,
-        })
-        return {base: baseAPR, reward: otherRewardAPR + crvRewardAPR}
-      });
-
+      let aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther })
 
       // Get first element which is ordered by DESC GraphQL query.
       if(aprs[0]) {
@@ -175,12 +100,8 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
 
 
       // Define historical volatility & risk score
-      console.log("stDev(aprs) = ", stDev(aprs))
       setHistVol(stDev(aprs).toFixed(1));
       setRiskScore(calculateRiskScore(aprs))
-
-
-      // aprs = aprs.map(apr => { return apr.toString() + "%" })
 
       let labels  = priceHistory.map( (h) => {
         const label = new Date(parseInt(h.timestamp * 1000))
@@ -200,8 +121,20 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
         }]
       });
 
+    }
 
+    if (!loadingPrice && !loadingPricePolygon) {
+      let latestPriceData;
+      if (subgraph.network === 'ethereum') {
+        let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
+        latestPriceData = priceHistData.reverse();
+      } else {
+        let priceHistData   = Object.assign([], priceDataPolygon.priceHistoryDailies);
+        latestPriceData = priceHistData.reverse();
+      }
 
+      const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
+      setTvl( "$" + prettyTVL )
     }
 
   }, [timeframe, priceData, rewardData, priceDataPolygon, rewardOtherData])
