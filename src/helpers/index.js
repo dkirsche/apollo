@@ -1,3 +1,15 @@
+// Calculate TVL based on latest (DESC) data.
+export function calculateTVL({ priceHistory, totalSupply }) {
+  if (!priceHistory || !priceHistory[0])
+    return null
+
+  const latestPricePerShare = priceHistory[0].pricePerShare;
+  const tvl = latestPricePerShare * totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
+
+  // Convert to Billys
+  console.log("tvl = ", tvl)
+  return commarize(tvl)
+}
 
 export function convertToPrice(numberInWei) {
   return numberInWei / Math.pow(10, 18);

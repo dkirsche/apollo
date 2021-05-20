@@ -104,9 +104,6 @@ export default function Dashboard(props) {
   }, [subgraphs])
 
   const updateNetwork = useCallback((network) => {
-    console.log('network = ', network)
-    console.log("selectedSubgraphs = ", subgraphs)
-
     if (network === 'all') {
       setSelectedSubgraphs(subgraphs)
     } else {

@@ -2,13 +2,11 @@
 
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { useState, useEffect } from "react";
-// import "antd/dist/antd.css";
-import { Button, Typography, Table, Input } from "antd";
 import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
-import { calculateRewardOtherAPR, calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore } from '../helpers';
+import { calculateRewardOtherAPR, calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore, calculateTVL } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -26,8 +24,8 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
   const [tvl, setTvl]     = useState(null);
   const [histVol, setHistVol] = useState(null);
   const [riskScore, setRiskScore] = useState(null);
-  console.log ({crvPrices})
-  console.log ({maticPrices})
+  // console.log ({crvPrices})
+  // console.log ({maticPrices})
   const GET_PRICE_HISTORIES = gql`
   query Recent
   {
@@ -89,10 +87,10 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
       startTimestamp = startOfDay - 91 * 24 * 60 * 60 * 1000;
 
 
+    console.log("loadingPrice = ", loadingPrice)
+    console.log("loadingReward = ", loadingReward)
 
-
-    if (priceData && rewardData && rewardOtherData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies && rewardOtherData.rewardOthers && priceDataPolygon) {
-
+    if (!loadingPrice && !loadingPricePolygon) {
       let latestPriceData;
       if (subgraph.network === 'ethereum') {
         let priceHistData   = Object.assign([], priceData.priceHistoryDailies);
@@ -102,16 +100,12 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
         latestPriceData = priceHistData.reverse();
       }
 
-      // Calculate TVL based on latest (DESC) data.
-      if (latestPriceData && latestPriceData[0]) {
-        const latestPricePerShare = latestPriceData[0].pricePerShare;
-        const tvl = latestPricePerShare * subgraph.totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
+      const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
+      setTvl( "$" + prettyTVL )
+    }
 
-        // Convert to Billys
-        console.log("tvl = ", tvl)
-        const prettyTVL = commarize(tvl)
-        setTvl( "$" + prettyTVL )
-      }
+
+    if (!loadingPrice && !loadingPricePolygon && !loadingReward && !loadingRewardOther) {
 
       const priceHistoryAll = mergeData(priceData.priceHistoryDailies,priceDataPolygon.priceHistoryDailies)
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
@@ -119,10 +113,6 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
-      let labels  = priceHistory.map( (h) => {
-        const label = new Date(parseInt(h.timestamp * 1000))
-        return label.toLocaleDateString("en-US");
-      });
 
       let aprs = priceHistory.map( price => {
         // Iterate over price history finding the corresponding timestamp.
@@ -192,9 +182,13 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
 
       // aprs = aprs.map(apr => { return apr.toString() + "%" })
 
+      let labels  = priceHistory.map( (h) => {
+        const label = new Date(parseInt(h.timestamp * 1000))
+        return label.toLocaleDateString("en-US");
+      });
+
       labels=labels.reverse()
       labels.shift()
-
 
       setChartData({
         labels: labels,
@@ -206,9 +200,11 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
         }]
       });
 
+
+
     }
 
-  }, [timeframe, priceData, rewardData,priceDataPolygon, rewardOtherData])
+  }, [timeframe, priceData, rewardData, priceDataPolygon, rewardOtherData])
 
 
   function image() {
@@ -266,7 +262,11 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe }) {
 
         <div className="col-4">
           <div class="farm-chart">
-            <Line data={chartData} options={chartOptions()} />
+            {loadingPrice && <div className="col-12 text-center">
+              <i className="fa fa-sync fa-spin" style={{fontSize: "32px"}} />
+            </div>}
+
+            {!loadingPrice && <Line data={chartData} options={chartOptions()} />}
           </div>
         </div>
 
