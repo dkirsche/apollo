@@ -1,10 +1,8 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 
 import React, { useState, useEffect, useCallback } from "react";
-import "antd/dist/antd.css";
-import { Button, Typography, Table, Input } from "antd";
+// import "antd/dist/antd.css";
 import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
-import { Address } from "../components";
 import Farm from "./Farm";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
@@ -33,66 +31,95 @@ export default function Dashboard(props) {
         id
         name
         totalSupply
+        priceHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+          id
+          pricePerShare
+          timestamp
+        }
+        rewardHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+          asset {
+            id
+          }
+          gaugeId
+          rewardPerShareBoosted
+          rewardPerShareNotBoosted
+          workingSupply
+          reward
+          rewardToken
+          rewardTokenID
+          timestamp
+        }
+
       }
     }`;
-    const SUBGRAPHS_QUERY_MATIC = gql`
-      query Recent
-      {
-        assets {
-          id
-          name
-          totalSupply
-        }
-      }`;
 
-  const { loading: loadingMainnet, error: errorMainnet, data: mainnetData } = useQuery(SUBGRAPHS_QUERY_MAINNET);
-  const { loading: loadingPolygon, error: errorPolygon, data: polygonData } = useQuery(SUBGRAPHS_QUERY_MATIC, { client: maticClient });
+  const SUBGRAPHS_QUERY_MATIC = gql`
+    query Recent
+    {
+      assets {
+        id
+        name
+        totalSupply
+        priceHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+          id
+          pricePerShare
+          timestamp
+        }
+        rewardHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+          asset {
+            id
+          }
+          gaugeId
+          rewardPerShareBoosted
+          rewardPerShareNotBoosted
+          workingSupply
+          reward
+          rewardToken
+          rewardTokenID
+          timestamp
+        }
+      }
+    }`;
+
+  const mainSubgraph  = useQuery(SUBGRAPHS_QUERY_MAINNET);
+  const maticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC, { client: maticClient });
+
+  // Fetch Coingecko API
+  async function loadPrices() {
+    try {
+      let crvPrices   = await axios("https://api.coingecko.com/api/v3/coins/curve-dao-token/market_chart?vs_currency=usd&days=90&interval=daily");
+      setCrvPrices(crvPrices.data.prices);
+      let maticPrices = await axios("https://api.coingecko.com/api/v3/coins/matic-network/market_chart?vs_currency=usd&days=90&interval=daily")
+      setMaticPrices(maticPrices.data.prices);
+    } catch {
+      alert("Something went wrong loading the prices. Please reload!");
+    }
+  }
+
+  async function loadData() {
+    if (mainSubgraph.data && mainSubgraph.data.assets && maticSubgraph.data && maticSubgraph.data.assets) {
+      const mainnetAssets = mainSubgraph.data.assets.map(ass => {
+        return {...ass, network: 'ethereum'}
+      }).filter(ass => {
+        return ass.name !== 'yearn Curve.fi yDAI/yUSDC/yUSDT/yTUSD' && ass.name !== 'curve_ren'
+      })
+      const polygonAssets = maticSubgraph.data.assets.map(ass => {
+        return {...ass, network: 'polygon'}
+      })
+
+      const assets = [...mainnetAssets, ...polygonAssets];
+      setSubgraphs(assets)
+      setSelectedSubgraphs(assets)
+
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadData() {
-
-      console.log("mainnetData = ", mainnetData)
-      console.log("polygonData = ", polygonData)
-
-      if (mainnetData && mainnetData.assets && polygonData && polygonData.assets) {
-        const mainnetAssets = mainnetData.assets.map(ass => {
-          return {...ass, network: 'ethereum'}
-        }).filter(ass => {
-          return ass.name !== 'yearn Curve.fi yDAI/yUSDC/yUSDT/yTUSD' && ass.name !== 'curve_ren'
-        })
-        const polygonAssets = polygonData.assets.map(ass => {
-          return {...ass, network: 'polygon'}
-        })
-
-
-        const assets = [...mainnetAssets, ...polygonAssets]
-        setSubgraphs(assets)
-        setSelectedSubgraphs(assets)
-
-        setLoading(false);
-      }
-
-      // Fetch Coingecko API
-      try {
-        let crvPrices = await axios("https://api.coingecko.com/api/v3/coins/curve-dao-token/market_chart?vs_currency=usd&days=90&interval=daily")
-
-        setCrvPrices(crvPrices.data.prices);
-      } catch {
-        alert("Something went wrong loading the prices. Please reload!");
-      }
-      try {
-        let maticPrices = await axios("https://api.coingecko.com/api/v3/coins/matic-network/market_chart?vs_currency=usd&days=90&interval=daily")
-
-        setMaticPrices(maticPrices.data.prices);
-      } catch {
-        alert("Something went wrong loading the prices. Please reload!");
-      }
-    }
-
+    loadPrices();
     loadData();
 
-  }, [mainnetData, polygonData])
-
+  }, [mainSubgraph.data, maticSubgraph.data])
 
 
   const handleSearch = useCallback((evt) => {
@@ -106,9 +133,6 @@ export default function Dashboard(props) {
   }, [subgraphs])
 
   const updateNetwork = useCallback((network) => {
-    console.log('network = ', network)
-    console.log("selectedSubgraphs = ", subgraphs)
-
     if (network === 'all') {
       setSelectedSubgraphs(subgraphs)
     } else {
@@ -201,7 +225,7 @@ export default function Dashboard(props) {
           </li>
 
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
+            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
           })}
         </ul>}
 

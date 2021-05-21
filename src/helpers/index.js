@@ -1,4 +1,89 @@
-export { default as Transactor } from "./Transactor";
+// export function mergeData(mainnetData, polygonData) {
+//   const mainnet = mainnetData.map(data => {
+//     return {...data, network: 'ethereum'}
+//   })
+//   const polygon = polygonData.map(data => {
+//     return {...data, network: 'polygon'}
+//   })
+//
+//   return [...mainnet, ...polygon]
+// }
+
+
+export function timestampForTimeframe({timeframe}) {
+  const currentTime = new Date().getTime();
+  const startOfDay  = currentTime - currentTime % (24 * 60 * 60);
+
+  if (timeframe === '7d')
+    return startOfDay - 8 * 24 * 60 * 60 * 1000;
+  else if (timeframe == '30d')
+    return startOfDay - 31 * 24 * 60 * 60 * 1000;
+  else if (timeframe == '90d')
+    return startOfDay - 91 * 24 * 60 * 60 * 1000;
+}
+
+export function calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther }) {
+  return priceHistory.map( price => {
+    // Iterate over price history finding the corresponding timestamp.
+    const correspondingReward = rewardHistory.find(reward => {
+      return price.timestamp === reward.timestamp
+    });
+    const correspondingRewardOther_yesterday = rewardOther.find(reward => {
+      return (price.timestamp - (24*60*60)) == reward.timestamp
+    });
+    //Should be the closest to today's timestamp as possible. Creating the upperbound to the next day b/c there should be an upperbound, but ideally the timestamp is much closer to today's timestamp
+    const correspondingRewardOther = rewardOther.find(reward => {
+      return price.timestamp === reward.timestamp
+    });
+    const price_yesterday = priceHistory.find(this_price => {
+      return (price.timestamp - (24*60*60)) == this_price.timestamp
+    });
+    const correspondingAssetPrice = crvPrices.find(this_price => {
+      const assetTimestamp  = this_price[0];
+      const priceHistoryTimestamp = price.timestamp * 1000; // start of day
+      return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
+    });
+    const correspondingMaticPrice = maticPrices.find(this_price => {
+      const assetTimestamp  = this_price[0];
+      const priceHistoryTimestamp = price.timestamp * 1000; // start of day
+      return assetTimestamp >= priceHistoryTimestamp && assetTimestamp <= priceHistoryTimestamp + 60 * 60 * 24 * 1000
+    });
+
+    let baseAPR = calculateBaseAPR({
+      pricePerShare: price?.pricePerShare,
+      pricePerShare_yesterday: price_yesterday?.pricePerShare,
+    })
+    let crvRewardAPR = calculateCrvAPR({
+      reward: correspondingReward?.rewardPerShareNotBoosted || 0,
+      pricePerShare: price?.pricePerShare,
+      assetPrice: correspondingAssetPrice ? correspondingAssetPrice[1] : 0,
+    })
+    let otherRewardAPR = calculateRewardOtherAPR({
+      rewardIntegral: correspondingRewardOther?.rewardIntegral,
+      rewardIntegral_yesterday: correspondingRewardOther_yesterday?.rewardIntegral,
+      rewardIntegralTimeStamp: correspondingRewardOther?.timestamp,
+      rewardIntegralTimeStamp_yesterday: correspondingRewardOther_yesterday?.timestamp,
+      rewardPrice: correspondingMaticPrice ? correspondingMaticPrice[1] : 0,
+    })
+    return {base: baseAPR, reward: otherRewardAPR + crvRewardAPR}
+  });
+
+
+}
+
+
+// Calculate TVL based on latest (DESC) data.
+export function calculateTVL({ priceHistory, totalSupply }) {
+  if (!priceHistory || !priceHistory[0])
+    return null
+
+  const latestPricePerShare = priceHistory[0].pricePerShare;
+  const tvl = latestPricePerShare * totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
+
+  // Convert to Billys
+  console.log("tvl = ", tvl)
+  return commarize(tvl)
+}
 
 export function convertToPrice(numberInWei) {
   return numberInWei / Math.pow(10, 18);

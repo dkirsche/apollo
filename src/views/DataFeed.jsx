@@ -1,10 +1,9 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 
 import React, { useState } from "react";
-import "antd/dist/antd.css";
-import { Button, Typography, Table, Input } from "antd";
+// import "antd/dist/antd.css";
+// import { Button, Typography, Table, Input } from "antd";
 import { useQuery, gql } from '@apollo/client';
-import { Address } from "../components";
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
@@ -42,7 +41,7 @@ export default function DataFeed(props) {
       <div style={{width:1200, margin: "auto", paddingBottom:64}}>
 
         <div style={{margin:32, textAlign:'right'}}>
-          <Input onChange={(e)=>{setSubgraph(e.target.value)}} value={subgraph} placeholder="Enter URL of subgraph here" />
+          <input type='text' onChange={(e)=>{setSubgraph(e.target.value)}} value={subgraph} placeholder="Enter URL of subgraph here" />
         </div>
 
         <p>
