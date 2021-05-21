@@ -56,17 +56,17 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   //   }
   // }`;
   const GET_REWARD_OTHER = gql`
-  query Recent
-  {
-    rewardOthers(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}){
-      asset {
-          id
-        }
-      gaugeId
-      rewardIntegral
-      timestamp
-    }
-  }`;
+    query Recent
+    {
+      rewardOthers(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}){
+        asset {
+            id
+          }
+        gaugeId
+        rewardIntegral
+        timestamp
+      }
+    }`;
 
   // const { data: priceData,  error: errorPrice,  loading: loadingPrice }  = useQuery(GET_PRICE_HISTORIES);
   // const { data: priceDataPolygon,  error: errorPricePolygon,  loading: loadingPricePolygon }  = useQuery(GET_PRICE_HISTORIES,{client: maticClient});
@@ -123,7 +123,9 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           data: aprs,
         }]
       });
+
     }
+
 
     let latestPriceData;
     if (subgraph.network === 'ethereum') {
@@ -137,7 +139,8 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
     const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
     setTvl( "$" + prettyTVL )
 
-  }, [timeframe, rewardOtherData])
+
+  }, [timeframe,  rewardOtherData])
 
 
   function image() {
