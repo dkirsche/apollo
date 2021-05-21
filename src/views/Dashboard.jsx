@@ -31,6 +31,25 @@ export default function Dashboard(props) {
         id
         name
         totalSupply
+        priceHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+          id
+          pricePerShare
+          timestamp
+        }
+        rewardHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+          asset {
+            id
+          }
+          gaugeId
+          rewardPerShareBoosted
+          rewardPerShareNotBoosted
+          workingSupply
+          reward
+          rewardToken
+          rewardTokenID
+          timestamp
+        }
+
       }
     }`;
     const SUBGRAPHS_QUERY_MATIC = gql`
@@ -40,6 +59,24 @@ export default function Dashboard(props) {
           id
           name
           totalSupply
+          priceHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+            id
+            pricePerShare
+            timestamp
+          }
+          rewardHistoryDaily(first: 100, orderBy: timestamp, orderDirection: desc) {
+            asset {
+              id
+            }
+            gaugeId
+            rewardPerShareBoosted
+            rewardPerShareNotBoosted
+            workingSupply
+            reward
+            rewardToken
+            rewardTokenID
+            timestamp
+          }
         }
       }`;
 
@@ -48,10 +85,8 @@ export default function Dashboard(props) {
 
   useEffect(() => {
     async function loadData() {
-
-      console.log("mainnetData = ", mainnetData)
-      console.log("polygonData = ", polygonData)
-
+      // console.log("mainnetData = ", mainnetData);
+      // console.log("polygonData = ", polygonData);
       if (mainnetData && mainnetData.assets && polygonData && polygonData.assets) {
         const mainnetAssets = mainnetData.assets.map(ass => {
           return {...ass, network: 'ethereum'}
@@ -62,8 +97,8 @@ export default function Dashboard(props) {
           return {...ass, network: 'polygon'}
         })
 
-
-        const assets = [...mainnetAssets, ...polygonAssets]
+        const assets = [...mainnetAssets, ...polygonAssets];
+        console.log("assets = ", assets)
         setSubgraphs(assets)
         setSelectedSubgraphs(assets)
 
@@ -90,7 +125,6 @@ export default function Dashboard(props) {
     loadData();
 
   }, [mainnetData, polygonData])
-
 
 
   const handleSearch = useCallback((evt) => {
@@ -196,7 +230,7 @@ export default function Dashboard(props) {
           </li>
 
           { selectedSubgraphs.map(function(subgraph) {
-            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
+            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
           })}
         </ul>}
 

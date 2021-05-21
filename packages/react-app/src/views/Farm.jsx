@@ -90,7 +90,6 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
 
 
-
     if (priceData && rewardData && rewardOtherData && priceData.priceHistoryDailies && rewardData.rewardHistoryDailies && rewardOtherData.rewardOthers && priceDataPolygon) {
 
       let latestPriceData;
@@ -113,7 +112,6 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
         setTvl( "$" + prettyTVL )
       }
 
-      const priceHistoryAll = mergeData(priceData.priceHistoryDailies,priceDataPolygon.priceHistoryDailies)
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
 
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
@@ -274,15 +272,4 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       </div>
     </li>
   );
-}
-
-function mergeData(mainnetData,polygonData){
-  const mainnet = mainnetData.map(data => {
-    return {...data, network: 'ethereum'}
-  })
-  const polygon = polygonData.map(data => {
-    return {...data, network: 'polygon'}
-  })
-
-  return [...mainnet, ...polygon]
 }

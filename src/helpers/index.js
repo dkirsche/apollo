@@ -1,3 +1,15 @@
+// export function mergeData(mainnetData, polygonData) {
+//   const mainnet = mainnetData.map(data => {
+//     return {...data, network: 'ethereum'}
+//   })
+//   const polygon = polygonData.map(data => {
+//     return {...data, network: 'polygon'}
+//   })
+//
+//   return [...mainnet, ...polygon]
+// }
+
+
 export function timestampForTimeframe({timeframe}) {
   const currentTime = new Date().getTime();
   const startOfDay  = currentTime - currentTime % (24 * 60 * 60);
