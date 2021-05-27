@@ -216,7 +216,7 @@ export default function Dashboard(props) {
               </div>
 
               <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Latest APR</h4>
+                <h4 className="mb-0">Average APR</h4>
               </div>
               <div className="col-2 align-items-center d-flex flex-column align-self-center">
                 <h4 className="mb-0">Risk Score</h4>

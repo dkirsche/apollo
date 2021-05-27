@@ -8,7 +8,7 @@ import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
 import { calculateRewardOtherAPR,
   calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
-  calculateTVL, calculateAPR, timestampForTimeframe } from '../helpers';
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -90,9 +90,10 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
       // Get first element which is ordered by DESC GraphQL query.
       if(aprs[0]) {
-        setBaseAPR(aprs[0].base.toFixed(1));
-        setRewardAPR(aprs[0].reward.toFixed(1));
-        setTotalAPR((aprs[0].base + aprs[0].reward).toFixed(1));
+        const averageAPRs = calculateAverageAPR({aprs, timeframe});
+        setBaseAPR(averageAPRs.base);
+        setRewardAPR(averageAPRs.reward);
+        setTotalAPR(averageAPRs.total);
       }
 
       // Calculate total APR

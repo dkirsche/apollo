@@ -22,6 +22,19 @@ export function timestampForTimeframe({timeframe}) {
     return startOfDay - 91 * 24 * 60 * 60 * 1000;
 }
 
+export function calculateAverageAPR({ aprs, timeframe }) {
+  const index  = Number(timeframe.split("d")[0]) - 1
+  const base   = aprs.slice(0, index).map(apr => apr.base).reduce((a,b) => a + b) / (index + 1);
+  const reward = aprs.slice(0, index).map(apr => apr.reward).reduce((a,b) => a + b) / (index + 1);
+  const total  = aprs.slice(0, index).map(apr => apr.base + apr.reward).reduce((a,b) => a + b) / (index + 1);
+
+  return {
+    base: base.toFixed(1),
+    reward: reward.toFixed(1),
+    total: total.toFixed(1)
+  }
+}
+
 export function calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther }) {
   return priceHistory.map( price => {
     // Iterate over price history finding the corresponding timestamp.
