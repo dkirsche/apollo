@@ -23,10 +23,10 @@ export function timestampForTimeframe({timeframe}) {
 }
 
 export function calculateAverageAPR({ aprs, timeframe }) {
-  const index  = Number(timeframe.split("d")[0]) - 1
-  const base   = aprs.slice(0, index).map(apr => apr.base).reduce((a,b) => a + b) / (index + 1);
-  const reward = aprs.slice(0, index).map(apr => apr.reward).reduce((a,b) => a + b) / (index + 1);
-  const total  = aprs.slice(0, index).map(apr => apr.base + apr.reward).reduce((a,b) => a + b) / (index + 1);
+  const index  = Number(timeframe.split("d")[0])
+  const base   = aprs.slice(0, index).map(apr => apr.base).reduce((a,b) => a + b) / index;
+  const reward = aprs.slice(0, index).map(apr => apr.reward).reduce((a,b) => a + b) / index;
+  const total  = aprs.slice(0, index).map(apr => apr.base + apr.reward).reduce((a,b) => a + b) / index;
 
   return {
     base: base.toFixed(1),
@@ -141,7 +141,8 @@ export function chartOptions() {
 
     elements: {
       point:{
-        radius: 0
+        radius: 2,
+        hitRadius:3
       }
     },
 
