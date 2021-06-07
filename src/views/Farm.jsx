@@ -88,20 +88,19 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
       let aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther })
 
-      // Get first element which is ordered by DESC GraphQL query.
+      //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
+      aprs = aprs.reverse();
+      aprs.shift();
+
       if(aprs[0]) {
         const averageAPRs = calculateAverageAPR({aprs, timeframe});
         setBaseAPR(averageAPRs.base);
         setRewardAPR(averageAPRs.reward);
         setTotalAPR(averageAPRs.total);
       }
-
+      
       // Calculate total APR
-      //sort ascending & remove first element which is just used so that pricePerShare_yesterday is available
       aprs = aprs.map(apr => apr.base + apr.reward);
-      aprs = aprs.reverse();
-      aprs.shift();
-
 
       // Define historical volatility & risk score
       setHistVol(stDev(aprs).toFixed(1));
