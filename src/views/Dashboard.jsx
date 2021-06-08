@@ -248,7 +248,43 @@ export default function Dashboard(props) {
           </div>
         </div>}
 
-        {!loading && <ul className="list-group mt-4">
+        {!loading && <table className="table">
+          <thead>
+            <tr>
+              <th scope="col" onClick={() => setSort('name')}>
+                Pool
+                {sortIcon('name')}
+              </th>
+              <th scope="col">
+                TVL
+              </th>
+
+              <th scope="col">
+                Historical APR
+              </th>
+
+              <th scope="col" onClick={() => setSort('apr')}>
+                Average APR
+                {sortIcon('apr')}
+              </th>
+
+              <th scope="col">
+                Risk Score
+              </th>
+
+            </tr>
+          </thead>
+          <tbody>
+            { sortedTableData().map(function(subgraph) {
+              return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
+            })}
+          </tbody>
+        </table>}
+
+
+
+
+        {false && !loading && <ul className="list-group mt-4">
           <li className="list-group-item">
             <div className="row">
               <div className="col-2 align-items-center d-flex flex-column align-self-center">
@@ -274,7 +310,7 @@ export default function Dashboard(props) {
             </div>
           </li>
 
-          { selectedSubgraphs.map(function(subgraph) {
+          { sortedTableData().map(function(subgraph) {
             return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
           })}
         </ul>}
