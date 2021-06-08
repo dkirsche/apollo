@@ -116,8 +116,34 @@ export default function Dashboard(props) {
       })
 
       const assets = [...mainnetAssets, ...polygonAssets];
-      setSubgraphs(assets)
-      setSelectedSubgraphs(assets)
+
+
+      // Now, let's calculate APR and associate with subgraph.
+      // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
+      // to be pulled in here.
+      let aprs;
+      const formattedAssets = assets.map(subgraph => {
+        const startTimestamp = timestampForTimeframe({ timeframe })
+        const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
+        const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
+        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther: [] })
+        aprs = aprs.reverse();
+        aprs.shift();
+
+        if(aprs[0]) {
+          const averageAPRs = calculateAverageAPR({aprs, timeframe});
+          subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
+        }
+
+        return subgraph
+      });
+
+
+      setSubgraphs(formattedAssets)
+      setSelectedSubgraphs(formattedAssets)
+
+
+
 
       setLoading(false);
     }
