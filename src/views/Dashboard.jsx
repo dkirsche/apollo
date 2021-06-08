@@ -8,6 +8,11 @@ import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 // import fetch from 'isomorphic-fetch';
 import axios from 'axios';
+import orderBy from 'lodash/orderBy';
+
+import { calculateRewardOtherAPR,
+  calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR } from '../helpers';
 
 const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
@@ -23,6 +28,9 @@ export default function Dashboard(props) {
   const [crvPrices, setCrvPrices] = useState([])
   const [maticPrices, setMaticPrices] = useState([])
   const [loading, setLoading] = useState(true);
+
+  const [sortBy, setSortBy] = useState('apr');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const SUBGRAPHS_QUERY_MAINNET = gql`
     query Recent
@@ -121,6 +129,46 @@ export default function Dashboard(props) {
 
   }, [mainSubgraph.data, maticSubgraph.data])
 
+  const sortedTableData = useCallback(() => {
+    if (!selectedSubgraphs) {
+      return [];
+    }
+    if (sortBy === 'apr') {
+      return orderBy(selectedSubgraphs, row => row.apr.total, [sortDirection]);
+    }
+
+    if (sortBy === 'name') {
+      return orderBy(selectedSubgraphs, row => row.name, [sortDirection]);
+    }
+
+    return orderBy(selectedSubgraphs, [sortBy], [sortDirection]);
+
+  }, [sortBy, sortDirection, selectedSubgraphs])
+
+
+  const setSort = value => {
+    let direction = 'desc';
+    if (value === sortBy && sortDirection === 'asc') {
+      direction = 'desc';
+    }
+    if (value === sortBy && sortDirection === 'desc') {
+      direction = 'asc';
+    }
+
+    setSortBy(value);
+    setSortDirection(direction);
+  };
+
+  const sortIcon = value => {
+    if (sortBy === value && sortDirection === 'asc') {
+      return <i className="fas fa-sort-up ml-2" />;
+    }
+    if (sortBy === value && sortDirection === 'desc') {
+      return <i className="fas fa-sort-down ml-2" />;
+    }
+
+    return <i className="fas fa-sort ml-2" style={{ color: '#ddd' }} />;
+  };
 
   const handleSearch = useCallback((evt) => {
     const query = evt.target.value.toLowerCase();
@@ -145,6 +193,8 @@ export default function Dashboard(props) {
   const updateTimeframe = useCallback((timeframe) => {
     setTimeframe(timeframe);
   }, [])
+
+
 
   return (
     <div className="row mt-4">
