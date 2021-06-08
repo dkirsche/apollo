@@ -8,6 +8,11 @@ import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 // import fetch from 'isomorphic-fetch';
 import axios from 'axios';
+import orderBy from 'lodash/orderBy';
+
+import { calculateRewardOtherAPR,
+  calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR } from '../helpers';
 
 const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
@@ -23,6 +28,9 @@ export default function Dashboard(props) {
   const [crvPrices, setCrvPrices] = useState([])
   const [maticPrices, setMaticPrices] = useState([])
   const [loading, setLoading] = useState(true);
+
+  const [sortBy, setSortBy] = useState('apr');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const SUBGRAPHS_QUERY_MAINNET = gql`
     query Recent
@@ -108,8 +116,34 @@ export default function Dashboard(props) {
       })
 
       const assets = [...mainnetAssets, ...polygonAssets];
-      setSubgraphs(assets)
-      setSelectedSubgraphs(assets)
+
+
+      // Now, let's calculate APR and associate with subgraph.
+      // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
+      // to be pulled in here.
+      let aprs;
+      const formattedAssets = assets.map(subgraph => {
+        const startTimestamp = timestampForTimeframe({ timeframe })
+        const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
+        const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
+        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther: [] })
+        aprs = aprs.reverse();
+        aprs.shift();
+
+        if(aprs[0]) {
+          const averageAPRs = calculateAverageAPR({aprs, timeframe});
+          subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
+        }
+
+        return subgraph
+      });
+
+
+      setSubgraphs(formattedAssets)
+      setSelectedSubgraphs(formattedAssets)
+
+
+
 
       setLoading(false);
     }
@@ -121,6 +155,46 @@ export default function Dashboard(props) {
 
   }, [mainSubgraph.data, maticSubgraph.data])
 
+  const sortedTableData = useCallback(() => {
+    if (!selectedSubgraphs) {
+      return [];
+    }
+    if (sortBy === 'apr') {
+      return orderBy(selectedSubgraphs, row => row.apr.total, [sortDirection]);
+    }
+
+    if (sortBy === 'name') {
+      return orderBy(selectedSubgraphs, row => row.name, [sortDirection]);
+    }
+
+    return orderBy(selectedSubgraphs, [sortBy], [sortDirection]);
+
+  }, [sortBy, sortDirection, selectedSubgraphs])
+
+
+  const setSort = value => {
+    let direction = 'desc';
+    if (value === sortBy && sortDirection === 'asc') {
+      direction = 'desc';
+    }
+    if (value === sortBy && sortDirection === 'desc') {
+      direction = 'asc';
+    }
+
+    setSortBy(value);
+    setSortDirection(direction);
+  };
+
+  const sortIcon = value => {
+    if (sortBy === value && sortDirection === 'asc') {
+      return <i className="fas fa-sort-up ml-2" />;
+    }
+    if (sortBy === value && sortDirection === 'desc') {
+      return <i className="fas fa-sort-down ml-2" />;
+    }
+
+    return <i className="fas fa-sort ml-2" style={{ color: '#ddd' }} />;
+  };
 
   const handleSearch = useCallback((evt) => {
     const query = evt.target.value.toLowerCase();
@@ -145,6 +219,8 @@ export default function Dashboard(props) {
   const updateTimeframe = useCallback((timeframe) => {
     setTimeframe(timeframe);
   }, [])
+
+
 
   return (
     <div className="row mt-4">
@@ -198,7 +274,43 @@ export default function Dashboard(props) {
           </div>
         </div>}
 
-        {!loading && <ul className="list-group mt-4">
+        {!loading && <table className="table">
+          <thead>
+            <tr>
+              <th scope="col" onClick={() => setSort('name')}>
+                Pool
+                {sortIcon('name')}
+              </th>
+              <th scope="col">
+                TVL
+              </th>
+
+              <th scope="col">
+                Historical APR
+              </th>
+
+              <th scope="col" onClick={() => setSort('apr')}>
+                Average APR
+                {sortIcon('apr')}
+              </th>
+
+              <th scope="col">
+                Risk Score
+              </th>
+
+            </tr>
+          </thead>
+          <tbody>
+            { sortedTableData().map(function(subgraph) {
+              return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
+            })}
+          </tbody>
+        </table>}
+
+
+
+
+        {false && !loading && <ul className="list-group mt-4">
           <li className="list-group-item">
             <div className="row">
               <div className="col-2 align-items-center d-flex flex-column align-self-center">
@@ -224,7 +336,7 @@ export default function Dashboard(props) {
             </div>
           </li>
 
-          { selectedSubgraphs.map(function(subgraph) {
+          { sortedTableData().map(function(subgraph) {
             return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
           })}
         </ul>}

@@ -68,16 +68,9 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
       }
     }`;
 
-  // const { data: priceData,  error: errorPrice,  loading: loadingPrice }  = useQuery(GET_PRICE_HISTORIES);
-  // const { data: priceDataPolygon,  error: errorPricePolygon,  loading: loadingPricePolygon }  = useQuery(GET_PRICE_HISTORIES,{client: maticClient});
-
-  // const { data: rewardData, error: errorReward, loading: loadingReward } = useQuery(GET_REWARD_HISTORIES);
   const { data: rewardOtherData, error: errorRewardOther, loading: loadingRewardOther } = useQuery(GET_REWARD_OTHER,{client: maticClient});
 
   useEffect(()=>{
-    // const priceData        = subgraph //.priceHistoryDaily
-    // const priceDataPolygon = subgraph //.priceHistoryDaily
-
     if (!loadingRewardOther) {
       const startTimestamp = timestampForTimeframe({timeframe})
 
@@ -98,7 +91,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
         setRewardAPR(averageAPRs.reward);
         setTotalAPR(averageAPRs.total);
       }
-      
+
       // Calculate total APR
       aprs = aprs.map(apr => apr.base + apr.reward);
 
@@ -172,9 +165,9 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   }
 
   return (
-    <li className="list-group-item">
-      <div className="row">
-        <div className="col-2 align-items-center d-flex flex-column align-self-center">
+    <React.Fragment>
+      <tr key={subgraph.name}>
+        <td>
           <div className="d-flex mb-2 justify-content-center">
             <div className="d-flex" style={{width: "100px"}}>
               <div className="farm-pair" style={{zIndex: 1}}>
@@ -188,32 +181,75 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           </div>
 
           <h4 className="text-center">{ prettyName() }</h4>
-
           <span className="badge bg-warning text-dark">{ subgraph.network }</span>
-        </div>
+        </td>
 
-        <div className="col-1 align-items-center d-flex flex-column align-self-center">
+        <td>
           <h4 className="mb-1">{ tvl }</h4>
-        </div>
+        </td>
 
-        <div className="col-4">
+        <td style={{width: "40%"}}>
           <div className="farm-chart">
-
-
             <Line data={chartData} options={chartOptions()} />
           </div>
-        </div>
+        </td>
 
-        <div className="col-2 align-items-center d-flex flex-column align-self-center">
+
+
+        <td>
           <h1 className="mb-1">{ totalAPR }%</h1>
           <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
-        </div>
+        </td>
 
-        <div className="col-2 align-items-center d-flex flex-column align-self-center">
+        <td>
           <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
           <p className="text-muted">+/- { histVol}%</p>
+        </td>
+
+      </tr>
+
+      {false && <li className="list-group-item">
+        <div className="row">
+          <div className="col-2 align-items-center d-flex flex-column align-self-center">
+            <div className="d-flex mb-2 justify-content-center">
+              <div className="d-flex" style={{width: "100px"}}>
+                <div className="farm-pair" style={{zIndex: 1}}>
+                  <img src={ CurveImg } />
+                </div>
+
+                <div className="farm-pair" style={{zIndex: 2}}>
+                  <img src={ image() } />
+                </div>
+              </div>
+            </div>
+
+            <h4 className="text-center">{ prettyName() }</h4>
+
+            <span className="badge bg-warning text-dark">{ subgraph.network }</span>
+          </div>
+
+          <div className="col-1 align-items-center d-flex flex-column align-self-center">
+            <h4 className="mb-1">{ tvl }</h4>
+          </div>
+
+          <div className="col-4">
+            <div className="farm-chart">
+              <Line data={chartData} options={chartOptions()} />
+            </div>
+          </div>
+
+          <div className="col-2 align-items-center d-flex flex-column align-self-center">
+            <h1 className="mb-1">{ totalAPR }%</h1>
+            <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
+          </div>
+
+          <div className="col-2 align-items-center d-flex flex-column align-self-center">
+            <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
+            <p className="text-muted">+/- { histVol}%</p>
+          </div>
         </div>
-      </div>
-    </li>
+      </li>}
+
+    </React.Fragment>
   );
 }
