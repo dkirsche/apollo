@@ -103,6 +103,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
   function prettyName() {
     const vaultName = subgraph.name.toLowerCase().split("_")[1];
+
     if (vaultName === 'compound')
       return 'Compound Pool'
     else if (vaultName === 'usdp')
@@ -124,7 +125,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   return (
     <React.Fragment>
       <tr key={subgraph.name}>
-        <td class="text-center" style={{width: "15%"}}>
+        <td className="text-center" style={{width: "15%"}}>
           <div className="d-flex mb-2 justify-content-center">
             <div className="d-flex" style={{width: "100px"}}>
               <div className="farm-pair" style={{zIndex: 1}}>
@@ -141,7 +142,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           <span className="badge bg-warning text-dark">{ subgraph.network }</span>
         </td>
 
-        <td style={{width: "15%"}} class="text-center">
+        <td style={{width: "15%"}} className="text-center">
           <h4 className="mb-1">${ commarize(subgraph.tvl) }</h4>
         </td>
 
@@ -150,8 +151,6 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
             <Line data={chartData} options={chartOptions()} />
           </div>
         </td>
-
-
 
         <td style={{width: "15%"}} className='text-center'>
           <h1 className="mb-1">{ totalAPR }%</h1>
