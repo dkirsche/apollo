@@ -86,6 +86,14 @@ export default function Dashboard(props) {
           rewardTokenID
           timestamp
         }
+        rewardOther(first: 100, orderBy: timestamp, orderDirection: desc){
+          asset {
+              id
+            }
+          gaugeId
+          rewardIntegral
+          timestamp
+        }
       }
     }`;
 
@@ -126,7 +134,14 @@ export default function Dashboard(props) {
         const startTimestamp = timestampForTimeframe({ timeframe })
         const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
         const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
-        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther: [] })
+
+        let rewardOther;
+        if (subgraph.rewardOther)
+          rewardOther = subgraph.rewardOther.filter(price => price.timestamp * 1000 >= startTimestamp);
+        else
+          rewardOther = [];
+
+        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther })
         aprs = aprs.reverse();
         aprs.shift();
 

@@ -75,7 +75,6 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
       const startTimestamp = timestampForTimeframe({timeframe})
 
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
-
       const rewardHistory = rewardHistoryAll.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
@@ -167,7 +166,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   return (
     <React.Fragment>
       <tr key={subgraph.name}>
-        <td>
+        <td class="text-center" style={{width: "20%"}}>
           <div className="d-flex mb-2 justify-content-center">
             <div className="d-flex" style={{width: "100px"}}>
               <div className="farm-pair" style={{zIndex: 1}}>
@@ -184,8 +183,8 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           <span className="badge bg-warning text-dark">{ subgraph.network }</span>
         </td>
 
-        <td>
-          <h4 className="mb-1">{ tvl }</h4>
+        <td style={{width: "20%"}} class="text-center">
+          <h4 className="mb-1">${ subgraph.tvl }</h4>
         </td>
 
         <td style={{width: "40%"}}>
@@ -196,12 +195,12 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
 
 
-        <td>
+        <td style={{width: "20%"}}>
           <h1 className="mb-1">{ totalAPR }%</h1>
           <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
         </td>
 
-        <td>
+        <td style={{width: "20%"}}>
           <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
           <p className="text-muted">+/- { histVol}%</p>
         </td>
