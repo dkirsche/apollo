@@ -8,7 +8,7 @@ import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
 import { calculateRewardOtherAPR,
   calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
-  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR } from '../helpers';
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR  } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 import CurveImg from '../assets/curve.png';
 
@@ -124,7 +124,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   return (
     <React.Fragment>
       <tr key={subgraph.name}>
-        <td class="text-center" style={{width: "20%"}}>
+        <td class="text-center" style={{width: "15%"}}>
           <div className="d-flex mb-2 justify-content-center">
             <div className="d-flex" style={{width: "100px"}}>
               <div className="farm-pair" style={{zIndex: 1}}>
@@ -141,11 +141,11 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           <span className="badge bg-warning text-dark">{ subgraph.network }</span>
         </td>
 
-        <td style={{width: "20%"}} class="text-center">
-          <h4 className="mb-1">${ subgraph.tvl }</h4>
+        <td style={{width: "15%"}} class="text-center">
+          <h4 className="mb-1">${ commarize(subgraph.tvl) }</h4>
         </td>
 
-        <td style={{width: "40%"}} className='text-center'>
+        <td style={{width: "30%"}} className='text-center'>
           <div className="farm-chart">
             <Line data={chartData} options={chartOptions()} />
           </div>
@@ -153,59 +153,17 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
 
 
-        <td style={{width: "20%"}} className='text-center'>
+        <td style={{width: "15%"}} className='text-center'>
           <h1 className="mb-1">{ totalAPR }%</h1>
           <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
         </td>
 
-        <td style={{width: "20%"}} className='text-center'>
+        <td style={{width: "15%"}} className='text-center'>
           <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
           <p className="text-muted">+/- { histVol}%</p>
         </td>
 
       </tr>
-
-      {false && <li className="list-group-item">
-        <div className="row">
-          <div className="col-2 align-items-center d-flex flex-column align-self-center">
-            <div className="d-flex mb-2 justify-content-center">
-              <div className="d-flex" style={{width: "100px"}}>
-                <div className="farm-pair" style={{zIndex: 1}}>
-                  <img src={ CurveImg } />
-                </div>
-
-                <div className="farm-pair" style={{zIndex: 2}}>
-                  <img src={ image() } />
-                </div>
-              </div>
-            </div>
-
-            <h4 className="text-center">{ prettyName() }</h4>
-
-            <span className="badge bg-warning text-dark">{ subgraph.network }</span>
-          </div>
-
-          <div className="col-1 align-items-center d-flex flex-column align-self-center">
-            <h4 className="mb-1">{ tvl }</h4>
-          </div>
-
-          <div className="col-4">
-            <div className="farm-chart">
-              <Line data={chartData} options={chartOptions()} />
-            </div>
-          </div>
-
-          <div className="col-2 align-items-center d-flex flex-column align-self-center">
-            <h1 className="mb-1">{ totalAPR }%</h1>
-            <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
-          </div>
-
-          <div className="col-2 align-items-center d-flex flex-column align-self-center">
-            <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
-            <p className="text-muted">+/- { histVol}%</p>
-          </div>
-        </div>
-      </li>}
 
     </React.Fragment>
   );

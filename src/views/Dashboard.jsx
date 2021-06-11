@@ -306,25 +306,25 @@ export default function Dashboard(props) {
         {!loading && <table className="table">
           <thead>
             <tr>
-              <th class="text-center" scope="col" onClick={() => setSort('name')}>
+              <th className="text-center" scope="col" onClick={() => setSort('name')}>
                 Pool
                 {sortIcon('name')}
               </th>
-              <th class="text-center" scope="col" onClick={() => setSort('tvl')}>
+              <th className="text-center" scope="col" onClick={() => setSort('tvl')}>
                 TVL
                 {sortIcon('tvl')}
               </th>
 
-              <th class="text-center" scope="col">
+              <th className="text-center" scope="col">
                 Historical APR
               </th>
 
-              <th class="text-center" scope="col" onClick={() => setSort('apr')}>
+              <th className="text-center" scope="col" onClick={() => setSort('apr')}>
                 Average APR
                 {sortIcon('apr')}
               </th>
 
-              <th class="text-center" scope="col">
+              <th className="text-center" scope="col">
                 Risk Score
               </th>
 
@@ -336,40 +336,6 @@ export default function Dashboard(props) {
             })}
           </tbody>
         </table>}
-
-
-
-
-        {false && !loading && <ul className="list-group mt-4">
-          <li className="list-group-item">
-            <div className="row">
-              <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <div className="d-flex mb-2 justify-content-center">
-                  <h4 className="mb-0">Pool</h4>
-                </div>
-              </div>
-
-              <div className="col-1 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">TVL</h4>
-              </div>
-
-              <div className="col-4 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Historical APR</h4>
-              </div>
-
-              <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Average APR</h4>
-              </div>
-              <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Risk Score</h4>
-              </div>
-            </div>
-          </li>
-
-          { sortedTableData().map(function(subgraph) {
-            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
-          })}
-        </ul>}
 
 
       </div>
