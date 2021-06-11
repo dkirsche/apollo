@@ -86,6 +86,14 @@ export default function Dashboard(props) {
           rewardTokenID
           timestamp
         }
+        rewardOther(first: 100, orderBy: timestamp, orderDirection: desc){
+          asset {
+              id
+            }
+          gaugeId
+          rewardIntegral
+          timestamp
+        }
       }
     }`;
 
@@ -126,7 +134,14 @@ export default function Dashboard(props) {
         const startTimestamp = timestampForTimeframe({ timeframe })
         const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
         const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
-        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther: [] })
+
+        let rewardOther;
+        if (subgraph.rewardOther)
+          rewardOther = subgraph.rewardOther.filter(price => price.timestamp * 1000 >= startTimestamp);
+        else
+          rewardOther = [];
+
+        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther })
         aprs = aprs.reverse();
         aprs.shift();
 
@@ -135,15 +150,23 @@ export default function Dashboard(props) {
           subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
         }
 
+        let latestPriceData;
+        if (subgraph.network === 'ethereum') {
+          let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
+          latestPriceData = priceHistData.reverse();
+        } else {
+          let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
+          latestPriceData = priceHistData.reverse();
+        }
+
+        const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
+        subgraph.tvl = prettyTVL
+
         return subgraph
       });
 
-
       setSubgraphs(formattedAssets)
       setSelectedSubgraphs(formattedAssets)
-
-
-
 
       setLoading(false);
     }
@@ -156,20 +179,26 @@ export default function Dashboard(props) {
   }, [mainSubgraph.data, maticSubgraph.data])
 
   const sortedTableData = useCallback(() => {
+    console.log("CHANGED TIMEFR")
+
     if (!selectedSubgraphs) {
       return [];
     }
     if (sortBy === 'apr') {
-      return orderBy(selectedSubgraphs, row => row.apr.total, [sortDirection]);
+      return orderBy(selectedSubgraphs, row => Number(row.apr.total), [sortDirection]);
     }
 
     if (sortBy === 'name') {
       return orderBy(selectedSubgraphs, row => row.name, [sortDirection]);
     }
 
+    if (sortBy === 'tvl') {
+      return orderBy(selectedSubgraphs, row => row.tvl, [sortDirection]);
+    }
+
     return orderBy(selectedSubgraphs, [sortBy], [sortDirection]);
 
-  }, [sortBy, sortDirection, selectedSubgraphs])
+  }, [sortBy, sortDirection, selectedSubgraphs, timeframe])
 
 
   const setSort = value => {
@@ -187,13 +216,13 @@ export default function Dashboard(props) {
 
   const sortIcon = value => {
     if (sortBy === value && sortDirection === 'asc') {
-      return <i className="fas fa-sort-up ml-2" />;
+      return <i className="fas fa-sort-up ms-2" />;
     }
     if (sortBy === value && sortDirection === 'desc') {
-      return <i className="fas fa-sort-down ml-2" />;
+      return <i className="fas fa-sort-down ms-2" />;
     }
 
-    return <i className="fas fa-sort ml-2" style={{ color: '#ddd' }} />;
+    return <i className="fas fa-sort ms-2" style={{ color: '#ddd' }} />;
   };
 
   const handleSearch = useCallback((evt) => {
@@ -277,24 +306,25 @@ export default function Dashboard(props) {
         {!loading && <table className="table">
           <thead>
             <tr>
-              <th scope="col" onClick={() => setSort('name')}>
+              <th className="text-center" scope="col" onClick={() => setSort('name')}>
                 Pool
                 {sortIcon('name')}
               </th>
-              <th scope="col">
+              <th className="text-center" scope="col" onClick={() => setSort('tvl')}>
                 TVL
+                {sortIcon('tvl')}
               </th>
 
-              <th scope="col">
+              <th className="text-center" scope="col">
                 Historical APR
               </th>
 
-              <th scope="col" onClick={() => setSort('apr')}>
+              <th className="text-center" scope="col" onClick={() => setSort('apr')}>
                 Average APR
                 {sortIcon('apr')}
               </th>
 
-              <th scope="col">
+              <th className="text-center" scope="col">
                 Risk Score
               </th>
 
@@ -306,40 +336,6 @@ export default function Dashboard(props) {
             })}
           </tbody>
         </table>}
-
-
-
-
-        {false && !loading && <ul className="list-group mt-4">
-          <li className="list-group-item">
-            <div className="row">
-              <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <div className="d-flex mb-2 justify-content-center">
-                  <h4 className="mb-0">Pool</h4>
-                </div>
-              </div>
-
-              <div className="col-1 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">TVL</h4>
-              </div>
-
-              <div className="col-4 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Historical APR</h4>
-              </div>
-
-              <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Average APR</h4>
-              </div>
-              <div className="col-2 align-items-center d-flex flex-column align-self-center">
-                <h4 className="mb-0">Risk Score</h4>
-              </div>
-            </div>
-          </li>
-
-          { sortedTableData().map(function(subgraph) {
-            return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
-          })}
-        </ul>}
 
 
       </div>

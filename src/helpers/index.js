@@ -93,9 +93,7 @@ export function calculateTVL({ priceHistory, totalSupply }) {
   const latestPricePerShare = priceHistory[0].pricePerShare;
   const tvl = latestPricePerShare * totalSupply / (Math.pow(10, 18) * Math.pow(10, 18));
 
-  // Convert to Billys
-  console.log("tvl = ", tvl)
-  return commarize(tvl)
+  return tvl;
 }
 
 export function convertToPrice(numberInWei) {
