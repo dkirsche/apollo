@@ -26,35 +26,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   const [tvl, setTvl]     = useState(null);
   const [histVol, setHistVol] = useState(null);
   const [riskScore, setRiskScore] = useState(null);
-  // console.log ({crvPrices})
-  // console.log ({maticPrices})
-  // const GET_PRICE_HISTORIES = gql`
-  // query Recent
-  // {
-  //   priceHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
-  //     id
-  //     pricePerShare
-  //     timestamp
-  //   }
-  // }`;
 
-  // const GET_REWARD_HISTORIES = gql`
-  // query Recent
-  // {
-  //   rewardHistoryDailies(first: 100, orderBy: timestamp, orderDirection: desc, where: {asset: "${subgraph.id}"}) {
-  //     asset {
-  //       id
-  //     }
-  //     gaugeId
-  //     rewardPerShareBoosted
-  //     rewardPerShareNotBoosted
-  //     workingSupply
-  //     reward
-  //     rewardToken
-  //     rewardTokenID
-  //     timestamp
-  //   }
-  // }`;
   const GET_REWARD_OTHER = gql`
     query Recent
     {
@@ -118,20 +90,6 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
     }
 
-
-    // let latestPriceData;
-    // if (subgraph.network === 'ethereum') {
-    //   let priceHistData   = Object.assign([], priceHistoryAll);
-    //   latestPriceData = priceHistData.reverse();
-    // } else {
-    //   let priceHistData   = Object.assign([], priceHistoryAll);
-    //   latestPriceData = priceHistData.reverse();
-    // }
-    //
-    // const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
-    // setTvl( "$" + prettyTVL )
-
-
   }, [timeframe,  rewardOtherData])
 
 
@@ -187,7 +145,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           <h4 className="mb-1">${ subgraph.tvl }</h4>
         </td>
 
-        <td style={{width: "40%"}}>
+        <td style={{width: "40%"}} className='text-center'>
           <div className="farm-chart">
             <Line data={chartData} options={chartOptions()} />
           </div>
@@ -195,12 +153,12 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
 
 
-        <td style={{width: "20%"}}>
+        <td style={{width: "20%"}} className='text-center'>
           <h1 className="mb-1">{ totalAPR }%</h1>
           <p className="text-muted">{ baseAPR }% + { rewardAPR }%</p>
         </td>
 
-        <td style={{width: "20%"}}>
+        <td style={{width: "20%"}} className='text-center'>
           <h1 className={`mb-1 fw-bold ${ riskScore == 'A' || riskScore == 'B' ? 'text-success' : (riskScore == 'C' || riskScore == 'D' ? 'text-warning' : 'text-danger')}`}>{ riskScore }</h1>
           <p className="text-muted">+/- { histVol}%</p>
         </td>

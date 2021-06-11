@@ -152,10 +152,10 @@ export default function Dashboard(props) {
 
         let latestPriceData;
         if (subgraph.network === 'ethereum') {
-          let priceHistData   = Object.assign([], priceHistory);
+          let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
           latestPriceData = priceHistData.reverse();
         } else {
-          let priceHistData   = Object.assign([], priceHistory);
+          let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
           latestPriceData = priceHistData.reverse();
         }
 
@@ -164,8 +164,6 @@ export default function Dashboard(props) {
 
         return subgraph
       });
-
-
 
       setSubgraphs(formattedAssets)
       setSelectedSubgraphs(formattedAssets)
