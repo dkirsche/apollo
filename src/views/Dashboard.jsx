@@ -150,15 +150,25 @@ export default function Dashboard(props) {
           subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
         }
 
+        let latestPriceData;
+        if (subgraph.network === 'ethereum') {
+          let priceHistData   = Object.assign([], priceHistory);
+          latestPriceData = priceHistData.reverse();
+        } else {
+          let priceHistData   = Object.assign([], priceHistory);
+          latestPriceData = priceHistData.reverse();
+        }
+
+        const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
+        subgraph.tvl = prettyTVL
+
         return subgraph
       });
 
 
+
       setSubgraphs(formattedAssets)
       setSelectedSubgraphs(formattedAssets)
-
-
-
 
       setLoading(false);
     }
@@ -171,20 +181,26 @@ export default function Dashboard(props) {
   }, [mainSubgraph.data, maticSubgraph.data])
 
   const sortedTableData = useCallback(() => {
+    console.log("CHANGED TIMEFR")
+
     if (!selectedSubgraphs) {
       return [];
     }
     if (sortBy === 'apr') {
-      return orderBy(selectedSubgraphs, row => row.apr.total, [sortDirection]);
+      return orderBy(selectedSubgraphs, row => Number(row.apr.total), [sortDirection]);
     }
 
     if (sortBy === 'name') {
       return orderBy(selectedSubgraphs, row => row.name, [sortDirection]);
     }
 
+    if (sortBy === 'tvl') {
+      return orderBy(selectedSubgraphs, row => row.tvl, [sortDirection]);
+    }
+
     return orderBy(selectedSubgraphs, [sortBy], [sortDirection]);
 
-  }, [sortBy, sortDirection, selectedSubgraphs])
+  }, [sortBy, sortDirection, selectedSubgraphs, timeframe])
 
 
   const setSort = value => {
@@ -202,13 +218,13 @@ export default function Dashboard(props) {
 
   const sortIcon = value => {
     if (sortBy === value && sortDirection === 'asc') {
-      return <i className="fas fa-sort-up ml-2" />;
+      return <i className="fas fa-sort-up ms-2" />;
     }
     if (sortBy === value && sortDirection === 'desc') {
-      return <i className="fas fa-sort-down ml-2" />;
+      return <i className="fas fa-sort-down ms-2" />;
     }
 
-    return <i className="fas fa-sort ml-2" style={{ color: '#ddd' }} />;
+    return <i className="fas fa-sort ms-2" style={{ color: '#ddd' }} />;
   };
 
   const handleSearch = useCallback((evt) => {
@@ -292,24 +308,25 @@ export default function Dashboard(props) {
         {!loading && <table className="table">
           <thead>
             <tr>
-              <th scope="col" onClick={() => setSort('name')}>
+              <th class="text-center" scope="col" onClick={() => setSort('name')}>
                 Pool
                 {sortIcon('name')}
               </th>
-              <th scope="col">
+              <th class="text-center" scope="col" onClick={() => setSort('tvl')}>
                 TVL
+                {sortIcon('tvl')}
               </th>
 
-              <th scope="col">
+              <th class="text-center" scope="col">
                 Historical APR
               </th>
 
-              <th scope="col" onClick={() => setSort('apr')}>
+              <th class="text-center" scope="col" onClick={() => setSort('apr')}>
                 Average APR
                 {sortIcon('apr')}
               </th>
 
-              <th scope="col">
+              <th class="text-center" scope="col">
                 Risk Score
               </th>
 

@@ -119,17 +119,17 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
     }
 
 
-    let latestPriceData;
-    if (subgraph.network === 'ethereum') {
-      let priceHistData   = Object.assign([], priceHistoryAll);
-      latestPriceData = priceHistData.reverse();
-    } else {
-      let priceHistData   = Object.assign([], priceHistoryAll);
-      latestPriceData = priceHistData.reverse();
-    }
-
-    const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
-    setTvl( "$" + prettyTVL )
+    // let latestPriceData;
+    // if (subgraph.network === 'ethereum') {
+    //   let priceHistData   = Object.assign([], priceHistoryAll);
+    //   latestPriceData = priceHistData.reverse();
+    // } else {
+    //   let priceHistData   = Object.assign([], priceHistoryAll);
+    //   latestPriceData = priceHistData.reverse();
+    // }
+    //
+    // const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
+    // setTvl( "$" + prettyTVL )
 
 
   }, [timeframe,  rewardOtherData])
