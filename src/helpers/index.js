@@ -41,6 +41,9 @@ export function calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHisto
     const correspondingReward = rewardHistory.find(reward => {
       return price.timestamp === reward.timestamp
     });
+
+    console.log("correspondingReward = ", correspondingReward)
+
     const correspondingRewardOther_yesterday = rewardOther.find(reward => {
       return (price.timestamp - (24*60*60)) == reward.timestamp
     });
@@ -110,13 +113,15 @@ export function calculateBaseAPR({pricePerShare, pricePerShare_yesterday}) {
 
 export function calculateCrvAPR({reward, pricePerShare, assetPrice}) {
   const rewardAPR = reward/pricePerShare * assetPrice * 365
+  console.log("reward = ", reward)
+  console.log("pricePerShare = ", pricePerShare)
+  console.log("rewardAPR  ", rewardAPR)
   //console.log({reward, pricePerShare, pricePerShare_yesterday, assetPrice, baseAPR, rewardAPR, totalAPR})
   return rewardAPR * 100;
 }
 
 export function calculateRewardOtherAPR({rewardIntegral, rewardIntegral_yesterday, rewardIntegralTimeStamp, rewardIntegralTimeStamp_yesterday, rewardPrice}) {
   if (!rewardIntegral || !rewardIntegral_yesterday || !rewardIntegralTimeStamp || !rewardIntegralTimeStamp_yesterday || !rewardPrice){
-    console.log ("returning 0")
     return 0;
   }
   const rewardDiff = (rewardIntegral - rewardIntegral_yesterday) / Math.pow(10, 18)

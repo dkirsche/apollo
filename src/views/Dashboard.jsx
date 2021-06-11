@@ -117,7 +117,7 @@ export default function Dashboard(props) {
       const mainnetAssets = mainSubgraph.data.assets.map(ass => {
         return {...ass, network: 'ethereum'}
       }).filter(ass => {
-        return ass.name !== 'yearn Curve.fi yDAI/yUSDC/yUSDT/yTUSD' && ass.name !== 'curve_ren'
+        return ass.name !== 'yearn Curve.fi yDAI/yUSDC/yUSDT/yTUSD' //&& ass.name !== 'curve_ren'
       })
       const polygonAssets = maticSubgraph.data.assets.map(ass => {
         return {...ass, network: 'polygon'}
@@ -150,6 +150,7 @@ export default function Dashboard(props) {
           subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
         }
 
+
         let latestPriceData;
         if (subgraph.network === 'ethereum') {
           let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
@@ -179,8 +180,6 @@ export default function Dashboard(props) {
   }, [mainSubgraph.data, maticSubgraph.data])
 
   const sortedTableData = useCallback(() => {
-    console.log("CHANGED TIMEFR")
-
     if (!selectedSubgraphs) {
       return [];
     }
