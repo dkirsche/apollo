@@ -95,13 +95,16 @@ export async function LoadAll(clients){
   subgraph = clients.get("matic")
   subgraph.subgraphQuery  = useQuery(SUBGRAPHS_QUERY_MATIC,{client: subgraph.client});
 }
-/*
+
 //check if the data isLoaded
 //used to know when to MergeData
-export function isLoading(dataRequests){
-  return dataRequests.map(dataRequest => dataRequest.loading).reduce((a,b) => a && b)
+export function IsLoaded(clients){
+  clients.forEach((data,subgraphName) => {
+    if (!data.subgraphQuery.data) return false
+  })
+  return true
 }
-*/
+
 
 //merge into one datasets
 export function MergeData(clients){

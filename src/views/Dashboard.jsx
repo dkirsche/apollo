@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 // import "antd/dist/antd.css";
 import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import Farm from "./Farm";
-import { LoadClients, LoadAll, MergeData } from '../helpers/subgraphs';
+import { LoadClients, IsLoaded, MergeData } from '../helpers/subgraphs';
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 // import fetch from 'isomorphic-fetch';
@@ -101,10 +101,18 @@ export default function Dashboard(props) {
     }`;
 
 
+  //this should be turned into its own effect eventually to seemlessly manage all subgraphs
+  let subgraph
+  //subgraph = clients.get("XXX") XXX is the top level key for each subgraph in subgraph.json
+  subgraph = clients.get("mainnet") //this is needed for each subgraph defined in subgraph.json.
+  let mainSubgraph = useQuery(SUBGRAPHS_QUERY_MAINNET,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = mainSubgraph
 
-  const mainSubgraph  = useQuery(SUBGRAPHS_QUERY_MAINNET);
-  const maticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC, { client: maticClient });
-  LoadAll(clients)
+  subgraph = clients.get("matic")
+  let maticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = maticSubgraph
+
+
   // Fetch Coingecko API
   async function loadPrices() {
     try {
@@ -118,71 +126,63 @@ export default function Dashboard(props) {
   }
 
   async function loadData() {
-    if (mainSubgraph.data && mainSubgraph.data.assets && maticSubgraph.data && maticSubgraph.data.assets) {
-      const mainnetAssets = mainSubgraph.data.assets.map(ass => {
-        return {...ass, network: 'ethereum'}
-      }).filter(ass => {
-        return ass.name !== 'yearn Curve.fi yDAI/yUSDC/yUSDT/yTUSD' && ass.name !== 'curve_ren'
-      })
-      const polygonAssets = maticSubgraph.data.assets.map(ass => {
-        return {...ass, network: 'polygon'}
-      })
+    if (!IsLoaded) return false
 
-      const assets = [...mainnetAssets, ...polygonAssets];
-      const allAssets = MergeData(clients)
-      console.log(assets)
-      console.log(allAssets)
-      // Now, let's calculate APR and associate with subgraph.
-      // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
-      // to be pulled in here.
-      let aprs;
-      const formattedAssets = assets.map(subgraph => {
-        const startTimestamp = timestampForTimeframe({ timeframe })
-        const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
-        const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
+    //const assets = [...mainnetAssets, ...polygonAssets];
+    const assets = MergeData(clients)
+    console.log(assets)
+    //console.log(allAssets)
+    // Now, let's calculate APR and associate with subgraph.
+    // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
+    // to be pulled in here.
+    let aprs;
+    const formattedAssets = assets.map(subgraph => {
+      const startTimestamp = timestampForTimeframe({ timeframe })
+      const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
+      const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
 
-        let rewardOther;
-        if (subgraph.rewardOther)
-          rewardOther = subgraph.rewardOther.filter(price => price.timestamp * 1000 >= startTimestamp);
-        else
-          rewardOther = [];
+      let rewardOther;
+      if (subgraph.rewardOther)
+        rewardOther = subgraph.rewardOther.filter(price => price.timestamp * 1000 >= startTimestamp);
+      else
+        rewardOther = [];
 
-        aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther })
-        aprs = aprs.reverse();
-        aprs.shift();
+      aprs = calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHistory, rewardOther })
+      aprs = aprs.reverse();
+      aprs.shift();
 
-        if(aprs[0]) {
-          const averageAPRs = calculateAverageAPR({aprs, timeframe});
-          subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
-        }
+      if(aprs[0]) {
+        const averageAPRs = calculateAverageAPR({aprs, timeframe});
+        subgraph.apr      = {base: averageAPRs.base, reward: averageAPRs.reward, total: averageAPRs.total}
+      }
 
-        let latestPriceData;
-        if (subgraph.network === 'ethereum') {
-          let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
-          latestPriceData = priceHistData.reverse();
-        } else {
-          let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
-          latestPriceData = priceHistData.reverse();
-        }
+      let latestPriceData;
+      if (subgraph.network === 'ethereum') {
+        let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
+        latestPriceData = priceHistData.reverse();
+      } else {
+        let priceHistData   = Object.assign([], subgraph.priceHistoryDaily);
+        latestPriceData = priceHistData.reverse();
+      }
 
-        const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
-        subgraph.tvl = prettyTVL
+      const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
+      subgraph.tvl = prettyTVL
 
-        return subgraph
-      });
+      return subgraph
+    });
 
-      setSubgraphs(formattedAssets)
-      setSelectedSubgraphs(formattedAssets)
+    setSubgraphs(formattedAssets)
+    setSelectedSubgraphs(formattedAssets)
 
-      setLoading(false);
-    }
+    setLoading(false);
   }
 
   useEffect(() => {
+    console.log("calling useEffect()")
     loadPrices();
     loadData();
 
-  }, [mainSubgraph.data, maticSubgraph.data])
+  }, [mainSubgraph, maticSubgraph])
 
   const sortedTableData = useCallback(() => {
     console.log("CHANGED TIMEFR")
