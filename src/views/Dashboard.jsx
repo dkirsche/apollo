@@ -104,13 +104,25 @@ export default function Dashboard(props) {
   //this should be turned into its own effect eventually to seemlessly manage all subgraphs
   let subgraph
   //subgraph = clients.get("XXX") XXX is the top level key for each subgraph in subgraph.json
-  subgraph = clients.get("mainnet") //this is needed for each subgraph defined in subgraph.json.
-  let mainSubgraph = useQuery(SUBGRAPHS_QUERY_MAINNET,{client: subgraph.client}); //need to store in separate variable for useEffect
-  subgraph.subgraphQuery  = mainSubgraph
+  subgraph = clients.get("yearn") //this is needed for each subgraph defined in subgraph.json.
+  let yearnSubgraph = useQuery(SUBGRAPHS_QUERY_MAINNET,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = yearnSubgraph
 
-  subgraph = clients.get("matic")
-  let maticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC,{client: subgraph.client}); //need to store in separate variable for useEffect
-  subgraph.subgraphQuery  = maticSubgraph
+  subgraph = clients.get("curve") //this is needed for each subgraph defined in subgraph.json.
+  let curveSubgraph = useQuery(SUBGRAPHS_QUERY_MAINNET,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = curveSubgraph
+
+  subgraph = clients.get("aave") //this is needed for each subgraph defined in subgraph.json.
+  let aaveSubgraph = useQuery(SUBGRAPHS_QUERY_MAINNET,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = aaveSubgraph
+
+  subgraph = clients.get("curveMatic")
+  let curveMaticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = curveMaticSubgraph
+
+  subgraph = clients.get("aaveMatic")
+  let aaveMaticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC,{client: subgraph.client}); //need to store in separate variable for useEffect
+  subgraph.subgraphQuery  = aaveMaticSubgraph
 
 
   // Fetch Coingecko API
@@ -182,7 +194,7 @@ export default function Dashboard(props) {
     loadPrices();
     loadData();
 
-  }, [mainSubgraph, maticSubgraph])
+  }, [yearnSubgraph, curveSubgraph, aaveSubgraph, curveMaticSubgraph, aaveMaticSubgraph])
 
   const sortedTableData = useCallback(() => {
     console.log("CHANGED TIMEFR")
