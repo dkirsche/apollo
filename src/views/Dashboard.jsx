@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 // import "antd/dist/antd.css";
 import { ApolloClient, InMemoryCache, useQuery, gql } from '@apollo/client';
 import Farm from "./Farm";
+import { LoadClients, LoadAll, MergeData } from '../helpers/subgraphs';
 import GraphiQL from 'graphiql';
 import 'graphiql/graphiql.min.css';
 // import fetch from 'isomorphic-fetch';
@@ -18,6 +19,8 @@ const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
   cache: new InMemoryCache()
 });
+
+let clients = LoadClients()
 
 export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
@@ -97,9 +100,11 @@ export default function Dashboard(props) {
       }
     }`;
 
+
+
   const mainSubgraph  = useQuery(SUBGRAPHS_QUERY_MAINNET);
   const maticSubgraph = useQuery(SUBGRAPHS_QUERY_MATIC, { client: maticClient });
-
+  LoadAll(clients)
   // Fetch Coingecko API
   async function loadPrices() {
     try {
@@ -124,8 +129,9 @@ export default function Dashboard(props) {
       })
 
       const assets = [...mainnetAssets, ...polygonAssets];
-
-
+      const allAssets = MergeData(clients)
+      console.log(assets)
+      console.log(allAssets)
       // Now, let's calculate APR and associate with subgraph.
       // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
       // to be pulled in here.

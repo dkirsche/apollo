@@ -1,0 +1,10 @@
+{
+  "mainnet": {
+    "network": "ethereum",
+    "uri": "https://api.thegraph.com/subgraphs/name/dkirsche/asset-price-history"
+  },
+  "matic": {
+    "network": "polygon",
+    "uri": "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest"
+  }
+}
