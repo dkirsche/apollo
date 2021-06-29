@@ -116,7 +116,6 @@ export function calculateCrvAPR({reward, pricePerShare, assetPrice}) {
 
 export function calculateRewardOtherAPR({rewardIntegral, rewardIntegral_yesterday, rewardIntegralTimeStamp, rewardIntegralTimeStamp_yesterday, rewardPrice}) {
   if (!rewardIntegral || !rewardIntegral_yesterday || !rewardIntegralTimeStamp || !rewardIntegralTimeStamp_yesterday || !rewardPrice){
-    console.log ("returning 0")
     return 0;
   }
   const rewardDiff = (rewardIntegral - rewardIntegral_yesterday) / Math.pow(10, 18)
