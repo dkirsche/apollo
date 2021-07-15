@@ -101,6 +101,7 @@ export function convertToPrice(numberInWei) {
 }
 
 export function calculateBaseAPR({pricePerShare, pricePerShare_yesterday}) {
+  if (!pricePerShare || !pricePerShare_yesterday) return 0
   const baseAPR = ((pricePerShare - pricePerShare_yesterday) / pricePerShare_yesterday) * 365;
   //const rewardAPR = reward/pricePerShare * assetPrice * 365
   //const totalAPR = baseAPR + rewardAPR
