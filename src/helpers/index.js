@@ -80,8 +80,66 @@ export function calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHisto
     })
     return {base: baseAPR, reward: otherRewardAPR + crvRewardAPR}
   });
+}
 
+export function getProtocol({ subgraph }) {
+  const subgraphName = subgraph.name.toLowerCase();
 
+  if (subgraphName.indexOf("aave") > -1 && subgraphName.indexOf("curve") === -1) {
+    return "aave";
+  }
+
+  if (subgraphName.indexOf("yvault") > -1) {
+    return "yearn";
+  }
+
+  return "curve";
+}
+
+export function getLogo({ subgraph }) {
+
+  const vaultName = subgraph.name.toLowerCase().split("_")[1];
+  if (vaultName === 'yswap')
+    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#yfi`
+  else
+    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#${vaultName}`
+
+}
+
+export function vaultName({ subgraph }) {
+  const subgraphName = subgraph.name.toLowerCase();
+
+  if (getProtocol({subgraph}) === 'aave') {
+    return subgraph.name.split("Aave")[1]
+  }
+
+  if (getProtocol({subgraph}) === 'yearn') {
+    const splits = subgraph.name.split(" ");
+
+    if (splits.length === 2)
+      return splits[0]
+    else if (splits[0].toLowerCase() === 'curve')
+      return "crv" + splits[1];
+  }
+
+  const vaultName = subgraphName.split("_")[1];
+
+  if (vaultName === 'compound')
+    return 'COMP'
+  else if (vaultName === 'usdp')
+    return 'USDP'
+  else if(vaultName === 'yswap')
+    return 'Y Pool'
+  else if(vaultName === 'ren')
+    return 'REN'
+  else if(vaultName === 'susd')
+    return 'sUSD'
+  else if(vaultName === 'aave')
+    return 'AAVE'
+  else if(vaultName === '3pool')
+    return '3Pool'
+  else
+    return subgraph.name
 }
 
 

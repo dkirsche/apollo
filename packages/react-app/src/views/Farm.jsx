@@ -11,7 +11,7 @@ import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
 import { calculateRewardOtherAPR, calculateAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
-import CurveImg from '../assets/curve.png';
+import CurveImg from '../assets/curve.svg';
 
 const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
@@ -113,7 +113,6 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       }
 
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
-
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
@@ -198,7 +197,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
     }
 
-  }, [timeframe, priceData, rewardData,priceDataPolygon, rewardOtherData])
+  }, [timeframe, protocol, priceData, rewardData,priceDataPolygon, rewardOtherData])
 
 
   function image() {
