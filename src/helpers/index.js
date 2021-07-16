@@ -142,6 +142,11 @@ export function vaultName({ subgraph }) {
     return subgraph.name
 }
 
+export function isStablecoin({ subgraph }) {
+  const name = subgraph.name.toLowerCase();
+  return ['usd', 'dai', 'frax'].filter(stable => name.indexOf(stable) > -1).length > 0
+}
+
 
 // Calculate TVL based on latest (DESC) data.
 export function calculateTVL({ priceHistory, totalSupply }) {

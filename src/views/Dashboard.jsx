@@ -13,7 +13,7 @@ import orderBy from 'lodash/orderBy';
 
 import { calculateRewardOtherAPR,
   calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
-  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, getProtocol } from '../helpers';
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, getProtocol, isStablecoin } from '../helpers';
 
 const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
@@ -25,6 +25,7 @@ let clients = LoadClients()
 export default function Dashboard(props) {
   // NOTE: This will depend on where you deploy.
   const [subgraphs, setSubgraphs] = useState([]);
+  const [assetType, setAssetType] = useState("stable");
   const [selectedSubgraphs, setSelectedSubgraphs] = useState([]);
   const [timeframe, setTimeframe] = useState("30d");
   const [protocol, setProtocol] = useState("curve"); // Default to AAVE
@@ -143,13 +144,12 @@ export default function Dashboard(props) {
 
     //const assets = [...mainnetAssets, ...polygonAssets];
     const assets = MergeData(clients)
-    console.log(assets)
-    //console.log(allAssets)
+
     // Now, let's calculate APR and associate with subgraph.
     // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
     // to be pulled in here.
     let aprs;
-    let formattedAssets = assets.map(subgraph => {
+    const allAssets = assets.map(subgraph => {
       const startTimestamp = timestampForTimeframe({ timeframe })
       const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
@@ -179,31 +179,29 @@ export default function Dashboard(props) {
       }
 
       subgraph.protocol = getProtocol({subgraph});
-
       const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
       subgraph.tvl = prettyTVL
+
+      subgraph.assetType = isStablecoin({ subgraph }) ? 'stable' : 'volatile';
 
       return subgraph
     });
 
-    formattedAssets = formattedAssets.filter(asset => asset.protocol === protocol && asset.network === network)
+    setSubgraphs(allAssets)
 
-    setSubgraphs(formattedAssets)
+    const formattedAssets = allAssets.filter(asset => asset.protocol === protocol && asset.network === network)
     setSelectedSubgraphs(formattedAssets)
 
     setLoading(false);
   }
 
   useEffect(() => {
-    console.log("calling useEffect()")
     loadPrices();
     loadData();
 
   }, [yearnSubgraph, curveSubgraph, aaveSubgraph, curveMaticSubgraph, aaveMaticSubgraph])
 
   const sortedTableData = useCallback(() => {
-    console.log("CHANGED TIMEFR")
-
     if (!selectedSubgraphs) {
       return [];
     }
@@ -273,11 +271,20 @@ export default function Dashboard(props) {
   }, [])
 
   const updateProtocol = useCallback((protocol) => {
-    setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol));
+    if (protocol === 'all') {
+      setSelectedSubgraphs(subgraphs)
+    } else {
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol));
+    }
+
     setProtocol(protocol);
   }, [subgraphs])
 
 
+  const updateAssetType = useCallback((assetType) => {
+    setSelectedSubgraphs(subgraphs.filter(asset => asset.assetType === assetType));
+    setAssetType(assetType);
+  }, [subgraphs])
 
   return (
     <div className="row mt-4">
@@ -308,8 +315,11 @@ export default function Dashboard(props) {
         <hr />
 
         <div className="row mt-2">
-          <div className="col-sm-8 d-flex">
+          <div className="col-sm-4 d-flex">
             <div className="btn-group" role="group" id="protocol">
+              <input type="radio" className="btn-check" name="protocol" id="protocol_all" autoComplete="off" checked={protocol === 'all'} onClick={() => { updateProtocol('all') } } />
+              <label className="btn btn-outline-primary" htmlFor="protocol_all">All</label>
+
               <input type="radio" className="btn-check" name="protocol" id="protocol_aave" autoComplete="off" checked={protocol === 'aave'} onClick={() => { updateProtocol('aave') } } />
               <label className="btn btn-outline-primary" htmlFor="protocol_aave">AAVE</label>
 
@@ -318,6 +328,16 @@ export default function Dashboard(props) {
 
               <input type="radio" className="btn-check" name="protocol" id="protocol_yearn" autoComplete="off" checked={protocol === 'yearn'} onClick={() => { updateProtocol('yearn') }} />
               <label className="btn btn-outline-primary" htmlFor="protocol_yearn">Yearn</label>
+            </div>
+          </div>
+
+          <div className="col-sm-4 d-flex">
+            <div className="btn-group" role="group" id="assetType">
+              <input type="radio" className="btn-check" name="assetType" id="assetType_curve" autoComplete="off" checked={assetType === 'stable'} onClick={() => { updateAssetType('stable') }} />
+              <label className="btn btn-outline-primary" htmlFor="assetType_stablecoins">Stablecoins</label>
+
+              <input type="radio" className="btn-check" name="assetType" id="assetType_yearn" autoComplete="off" checked={assetType === 'volatile'} onClick={() => { updateAssetType('volatile') }} />
+              <label className="btn btn-outline-primary" htmlFor="assetType_volatile">Volatile</label>
             </div>
           </div>
 
@@ -346,7 +366,7 @@ export default function Dashboard(props) {
           <thead>
             <tr>
               <th className="text-center" scope="col" onClick={() => setSort('name')}>
-                Pool
+                Vault
                 {sortIcon('name')}
               </th>
               <th className="text-center" scope="col" onClick={() => setSort('tvl')}>
