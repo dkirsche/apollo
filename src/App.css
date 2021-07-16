@@ -24,7 +24,7 @@ body {
 
 .farm-pair  img {
   color: transparent;
-  width: 40px;
+  width: 60px;
   height: 100%;
   object-fit: cover;
   text-align: center;
@@ -38,7 +38,7 @@ body {
 
 
 .protocol-img {
-  width: 30px;
+  width: 20px;
 }
 
 
@@ -46,6 +46,6 @@ body {
   position: relative;
   top: -10px;
   right: 10px;
-  width: 15px;
+  width: 10px;
   z-index: 100;
 }
