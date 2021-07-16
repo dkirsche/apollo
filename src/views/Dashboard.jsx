@@ -13,7 +13,7 @@ import orderBy from 'lodash/orderBy';
 
 import { calculateRewardOtherAPR,
   calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
-  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, getProtocol, isStablecoin } from '../helpers';
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, getProtocol, isStablecoin, getAssetName } from '../helpers';
 
 const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
@@ -183,13 +183,14 @@ export default function Dashboard(props) {
       subgraph.tvl = prettyTVL
 
       subgraph.assetType = isStablecoin({ subgraph }) ? 'stable' : 'volatile';
+      subgraph.asset     = getAssetName({ subgraph })
 
       return subgraph
     });
 
     setSubgraphs(allAssets)
 
-    const formattedAssets = allAssets.filter(asset => asset.protocol === protocol && asset.network === network)
+    const formattedAssets = allAssets.filter(asset => asset.protocol === protocol && asset.network === network && asset.assetType === assetType)
     setSelectedSubgraphs(formattedAssets)
 
     setLoading(false);
@@ -260,7 +261,7 @@ export default function Dashboard(props) {
     if (network === 'all') {
       setSelectedSubgraphs(subgraphs)
     } else {
-      setSelectedSubgraphs(subgraphs.filter(asset => asset.network === network));
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol && asset.network === network && asset.assetType === assetType));
     }
 
     setNetwork(network);
@@ -274,7 +275,7 @@ export default function Dashboard(props) {
     if (protocol === 'all') {
       setSelectedSubgraphs(subgraphs)
     } else {
-      setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol));
+      setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol && asset.network === network && asset.assetType === assetType));
     }
 
     setProtocol(protocol);
@@ -282,7 +283,7 @@ export default function Dashboard(props) {
 
 
   const updateAssetType = useCallback((assetType) => {
-    setSelectedSubgraphs(subgraphs.filter(asset => asset.assetType === assetType));
+    setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol && asset.network === network && asset.assetType === assetType));
     setAssetType(assetType);
   }, [subgraphs])
 
