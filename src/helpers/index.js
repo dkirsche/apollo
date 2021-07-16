@@ -89,7 +89,7 @@ export function getProtocol({ subgraph }) {
     return "aave";
   }
 
-  if (subgraphName.indexOf("yvault") > -1) {
+  if (subgraphName.indexOf("yvault") > -1 || subgraphName.indexOf('yearn') > -1) {
     return "yearn";
   }
 
@@ -97,12 +97,71 @@ export function getProtocol({ subgraph }) {
 }
 
 export function getLogo({ subgraph }) {
+  const assetName = subgraph.asset.toLowerCase();
+  if (assetName === 'dai')
+    return "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=013"
+  else if (assetName === 'frax')
+    return "https://cryptologos.cc/logos/frax-frax-logo.svg?v=013"
+  else if (assetName === 'usdt')
+    return "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=013"
+  else if (assetName === 'usdc')
+    return "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=013"
+  else if (assetName === 'busd')
+    return "https://cryptologos.cc/logos/binance-usd-busd-logo.svg?v=013"
+  else if (assetName === 'usdp' || assetName === 'lusd' || assetName === 'musd' || assetName === 'susd' || assetName === 'gusd' || assetName === 'tusd')
+    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#${assetName}`
+  else if (assetName.indexOf('eth') > -1)
+    return 'https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=013'
+  else if (assetName.indexOf('btc') > -1)
+    return 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=013'
+  else if (assetName.indexOf('aave') > -1)
+    return "https://cryptologos.cc/logos/aave-aave-logo.svg?v=013"
+  else if (assetName.indexOf('snx') > -1)
+    return "https://cryptologos.cc/logos/aave-aave-logo.svg?v=013"
+  else if (assetName.indexOf('bal') > -1)
+    return "https://cryptologos.cc/logos/balancer-bal-logo.svg?v=013"
+  else if (assetName.indexOf('crv') > -1)
+    return "https://cryptologos.cc/logos/curve-dao-token-crv-logo.svg?v=013"
+  else if (assetName.indexOf('matic') > -1)
+    return "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=013"
+  else if (assetName.indexOf('sushi') > -1)
+    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#sushi`
 
   const vaultName = subgraph.name.toLowerCase().split("_")[1];
   if (vaultName === 'yswap')
     return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#yfi`
+  else if (vaultName === 'compound')
+    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#comp`
   else
-    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#${vaultName}`
+    return `https://curve.fi/static/icons/svg/crypto-icons-stack-ethereum.svg#${assetName}`
+
+}
+
+export function getAssetName({ subgraph }) {
+  let name;
+  if (getProtocol({ subgraph }) === 'aave') {
+    return subgraph.name.replace("Aaveam", "").replace("Aavea", "");
+  }
+
+  if (getProtocol({subgraph}) === 'yearn') {
+    const splits = subgraph.name.split(" ");
+
+    if (subgraph.id === '0x5dbcf33d8c2e976c6b560249878e6f1491bca25c')
+      name = 'DAI+USDC+USDT+TUSD';
+
+    if (splits.length === 2)
+      name = splits[0]
+    else if (splits.length === 3)
+      name = splits[1]
+    else if (splits[0].toLowerCase() === 'curve')
+      name = splits[1];
+
+    return name;
+  }
+
+
+  name = subgraph.name.replace("curve_", "").replace("Curve_", "")
+  return name
 
 }
 
@@ -115,23 +174,29 @@ export function vaultName({ subgraph }) {
 
   if (getProtocol({subgraph}) === 'yearn') {
     const splits = subgraph.name.split(" ");
+    console.log("subgraph= ", subgraph)
+
+    if (subgraph.id === '0x5dbcf33d8c2e976c6b560249878e6f1491bca25c')
+      return 'DAI+USDC+USDT+TUSD';
 
     if (splits.length === 2)
       return splits[0]
+    else if (splits.length === 3)
+      return splits[1]
     else if (splits[0].toLowerCase() === 'curve')
-      return "crv" + splits[1];
+      return splits[1];
   }
 
   const vaultName = subgraphName.split("_")[1];
 
   if (vaultName === 'compound')
-    return 'COMP'
+    return 'Comp'
   else if (vaultName === 'usdp')
     return 'USDP'
   else if(vaultName === 'yswap')
-    return 'Y Pool'
+    return 'iearn'
   else if(vaultName === 'ren')
-    return 'REN'
+    return 'Ren'
   else if(vaultName === 'susd')
     return 'sUSD'
   else if(vaultName === 'aave')
@@ -140,6 +205,11 @@ export function vaultName({ subgraph }) {
     return '3Pool'
   else
     return subgraph.name
+}
+
+export function isStablecoin({ subgraph }) {
+  const name = subgraph.name.toLowerCase();
+  return ['usd', 'dai', 'frax'].filter(stable => name.indexOf(stable) > -1).length > 0
 }
 
 

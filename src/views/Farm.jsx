@@ -51,7 +51,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   useEffect(()=>{
     if (!loadingRewardOther) {
       const startTimestamp = timestampForTimeframe({timeframe})
-      
+
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory = rewardHistoryAll.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
@@ -98,7 +98,6 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
 
   }, [timeframe,  rewardOtherData])
 
-
   return (
     <React.Fragment>
       <tr key={subgraph.name}>
@@ -111,15 +110,18 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
             </div>
           </div>
 
-          <h4 className="text-center">{ vaultName({ subgraph }) }</h4>
+          <h4 className="text-center">{ subgraph.asset }</h4>
 
-          <div>
+          {false && <div>
             { getProtocol({ subgraph}) === 'curve' && <img className="protocol-img" src={ CurveImg } />}
             { getProtocol({ subgraph}) === 'aave' && <img className="protocol-img" src={ AaveImg } />}
             { getProtocol({ subgraph}) === 'yearn' && <img className="protocol-img" src={ YearnImg } />}
 
             <img className="layer-img" src={ subgraph.network === 'ethereum' ? EthImg : MaticImg } />
-          </div>
+          </div>}
+
+          <span className="badge bg-light text-dark">{subgraph.protocol} vault</span>
+          <span className="badge bg-light text-dark">{subgraph.network}</span>
         </td>
 
         <td style={{width: "15%"}} class="text-center">
