@@ -113,7 +113,6 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
       }
 
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
-
       const rewardHistory = rewardData.rewardHistoryDailies.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
 
@@ -198,7 +197,7 @@ export default function Farm({ subgraph, crvPrices, timeframe }) {
 
     }
 
-  }, [timeframe, priceData, rewardData,priceDataPolygon, rewardOtherData])
+  }, [timeframe, protocol, priceData, rewardData,priceDataPolygon, rewardOtherData])
 
 
   function image() {

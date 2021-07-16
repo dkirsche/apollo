@@ -82,7 +82,7 @@ export function calculateAPR({ crvPrices, maticPrices, priceHistory, rewardHisto
   });
 }
 
-export function protocol({ subgraph }) {
+export function getProtocol({ subgraph }) {
   const subgraphName = subgraph.name.toLowerCase();
 
   if (subgraphName.indexOf("aave") > -1 && subgraphName.indexOf("curve") === -1) {
@@ -109,11 +109,11 @@ export function getLogo({ subgraph }) {
 export function vaultName({ subgraph }) {
   const subgraphName = subgraph.name.toLowerCase();
 
-  if (protocol({subgraph}) === 'aave') {
+  if (getProtocol({subgraph}) === 'aave') {
     return subgraph.name.split("Aave")[1]
   }
 
-  if (protocol({subgraph}) === 'yearn') {
+  if (getProtocol({subgraph}) === 'yearn') {
     const splits = subgraph.name.split(" ");
 
     if (splits.length === 2)

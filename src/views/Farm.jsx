@@ -8,7 +8,7 @@ import 'graphiql/graphiql.min.css';
 import fetch from 'isomorphic-fetch';
 import { calculateRewardOtherAPR,
   calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
-  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, vaultName, getLogo, protocol } from '../helpers';
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, vaultName, getLogo, getProtocol } from '../helpers';
 import { defaults, Line } from 'react-chartjs-2';
 
 import EthImg from '../assets/ethereum.svg';
@@ -51,7 +51,7 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
   useEffect(()=>{
     if (!loadingRewardOther) {
       const startTimestamp = timestampForTimeframe({timeframe})
-
+      
       const priceHistory  = priceHistoryAll.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory = rewardHistoryAll.filter(price => price.timestamp * 1000 >= startTimestamp);
       const rewardOther = rewardOtherData.rewardOthers.filter(price => price.timestamp * 1000 >= startTimestamp);
@@ -114,9 +114,9 @@ export default function Farm({ subgraph, crvPrices, maticPrices, timeframe, pric
           <h4 className="text-center">{ vaultName({ subgraph }) }</h4>
 
           <div>
-            { protocol({ subgraph}) === 'curve' && <img className="protocol-img" src={ CurveImg } />}
-            { protocol({ subgraph}) === 'aave' && <img className="protocol-img" src={ AaveImg } />}
-            { protocol({ subgraph}) === 'yearn' && <img className="protocol-img" src={ YearnImg } />}
+            { getProtocol({ subgraph}) === 'curve' && <img className="protocol-img" src={ CurveImg } />}
+            { getProtocol({ subgraph}) === 'aave' && <img className="protocol-img" src={ AaveImg } />}
+            { getProtocol({ subgraph}) === 'yearn' && <img className="protocol-img" src={ YearnImg } />}
 
             <img className="layer-img" src={ subgraph.network === 'ethereum' ? EthImg : MaticImg } />
           </div>

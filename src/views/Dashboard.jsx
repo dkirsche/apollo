@@ -13,7 +13,7 @@ import orderBy from 'lodash/orderBy';
 
 import { calculateRewardOtherAPR,
   calculateBaseAPR, calculateCrvAPR, convertToPrice, chartOptions, commarize, stDev, calculateRiskScore,
-  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR } from '../helpers';
+  calculateTVL, calculateAPR, timestampForTimeframe, calculateAverageAPR, getProtocol } from '../helpers';
 
 const maticClient = new ApolloClient({
   uri: "https://api.thegraph.com/subgraphs/name/dkirsche/pricehistorytest",
@@ -27,7 +27,8 @@ export default function Dashboard(props) {
   const [subgraphs, setSubgraphs] = useState([]);
   const [selectedSubgraphs, setSelectedSubgraphs] = useState([]);
   const [timeframe, setTimeframe] = useState("30d");
-  const [network, setNetwork]     = useState("all");
+  const [protocol, setProtocol] = useState("curve"); // Default to AAVE
+  const [network, setNetwork]     = useState("ethereum");
   const [crvPrices, setCrvPrices] = useState([])
   const [maticPrices, setMaticPrices] = useState([])
   const [loading, setLoading] = useState(true);
@@ -148,7 +149,7 @@ export default function Dashboard(props) {
     // NOTE: This won't sort properly for Matic rewards. There's a separate query in <FARM> that needes
     // to be pulled in here.
     let aprs;
-    const formattedAssets = assets.map(subgraph => {
+    let formattedAssets = assets.map(subgraph => {
       const startTimestamp = timestampForTimeframe({ timeframe })
       const priceHistory   = subgraph.priceHistoryDaily.filter(price =>  price.timestamp * 1000 >= startTimestamp);
       const rewardHistory  = subgraph.rewardHistoryDaily.filter(price => price.timestamp * 1000 >= startTimestamp);
@@ -177,11 +178,15 @@ export default function Dashboard(props) {
         latestPriceData = priceHistData.reverse();
       }
 
+      subgraph.protocol = getProtocol({subgraph});
+
       const prettyTVL = calculateTVL({ priceHistory: latestPriceData, totalSupply: subgraph.totalSupply })
       subgraph.tvl = prettyTVL
 
       return subgraph
     });
+
+    formattedAssets = formattedAssets.filter(asset => asset.protocol === protocol && asset.network === network)
 
     setSubgraphs(formattedAssets)
     setSelectedSubgraphs(formattedAssets)
@@ -267,6 +272,11 @@ export default function Dashboard(props) {
     setTimeframe(timeframe);
   }, [])
 
+  const updateProtocol = useCallback((protocol) => {
+    setSelectedSubgraphs(subgraphs.filter(asset => asset.protocol === protocol));
+    setProtocol(protocol);
+  }, [subgraphs])
+
 
 
   return (
@@ -298,9 +308,20 @@ export default function Dashboard(props) {
         <hr />
 
         <div className="row mt-2">
-          <div className="col-sm-12 d-flex justify-content-end">
-            <label htmlFor="timeframeChoice" className="col-form-label col-1">Timeframe</label>
+          <div className="col-sm-8 d-flex">
+            <div className="btn-group" role="group" id="protocol">
+              <input type="radio" className="btn-check" name="protocol" id="protocol_aave" autoComplete="off" checked={protocol === 'aave'} onClick={() => { updateProtocol('aave') } } />
+              <label className="btn btn-outline-primary" htmlFor="protocol_aave">AAVE</label>
 
+              <input type="radio" className="btn-check" name="protocol" id="protocol_curve" autoComplete="off" checked={protocol === 'curve'} onClick={() => { updateProtocol('curve') }} />
+              <label className="btn btn-outline-primary" htmlFor="protocol_curve">Curve</label>
+
+              <input type="radio" className="btn-check" name="protocol" id="protocol_yearn" autoComplete="off" checked={protocol === 'yearn'} onClick={() => { updateProtocol('yearn') }} />
+              <label className="btn btn-outline-primary" htmlFor="protocol_yearn">Yearn</label>
+            </div>
+          </div>
+
+          <div className="col-sm-4 d-flex justify-content-end">
             <div className="btn-group" role="group" id="timeframeChoice" aria-label="Basic radio toggle button group">
               <input type="radio" className="btn-check" name="timeframe" id="timeframe_7d" autoComplete="off" checked={timeframe === '7d'} onClick={() => { updateTimeframe('7d') } } />
               <label className="btn btn-outline-primary" htmlFor="timeframe_7d">Past 7 days</label>
@@ -350,7 +371,7 @@ export default function Dashboard(props) {
           </thead>
           <tbody>
             { sortedTableData().map(function(subgraph) {
-              return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe}/>
+              return <Farm key={subgraph.id + '_' + subgraph.network} subgraph={subgraph} priceHistoryAll={subgraph.priceHistoryDaily} rewardHistoryAll={subgraph.rewardHistoryDaily}  crvPrices={crvPrices} maticPrices={maticPrices} timeframe={timeframe} protocol={protocol}/>
             })}
           </tbody>
         </table>}
